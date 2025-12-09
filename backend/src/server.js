@@ -5,6 +5,8 @@ import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 import { setupRoutes } from './routes/index.js';
 import { setupSocketIO } from './socket/socket.js';
@@ -12,6 +14,9 @@ import { errorHandler } from './middleware/errorHandler.js';
 import { connectDatabase } from './config/database.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
@@ -25,13 +30,23 @@ const io = new Server(httpServer, {
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+  contentSecurityPolicy: false, // Отключаем для админ-панели
+}));
 app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(',') || '*',
   credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Статическая раздача админ-панели
+app.use('/admin', express.static(path.join(__dirname, '../admin')));
+
+// Fallback для админ-панели (SPA routing)
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../admin/index.html'));
+});
 
 // Подключение к базе данных
 connectDatabase().then(() => {

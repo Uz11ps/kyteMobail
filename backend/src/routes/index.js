@@ -5,6 +5,7 @@ import groupRoutes from './group.routes.js';
 import aiRoutes from './ai.routes.js';
 import googleRoutes from './google.routes.js';
 import userRoutes from './user.routes.js';
+import adminRoutes from './admin.routes.js';
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.use('/groups', groupRoutes);
 router.use('/ai', aiRoutes);
 router.use('/google', googleRoutes);
 router.use('/user', userRoutes);
+router.use('/admin', adminRoutes);
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель Kyte Chat</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Экран входа -->
+    <div id="loginScreen" class="screen active">
+        <div class="login-container">
+            <div class="login-card">
+                <h1>🔐 Админ-панель</h1>
+                <p class="subtitle">Kyte Chat Management</p>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email" required placeholder="admin@kyte.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Пароль</label>
+                        <input type="password" id="password" required placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Войти</button>
+                </form>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Основной экран админ-панели -->
+    <div id="adminScreen" class="screen">
+        <div class="admin-header">
+            <h1>📊 Админ-панель Kyte Chat</h1>
+            <button id="logoutBtn" class="btn btn-secondary">Выйти</button>
+        </div>
+
+        <div class="admin-container">
+            <!-- Боковое меню -->
+            <aside class="sidebar">
+                <nav class="nav-menu">
+                    <a href="#" class="nav-item active" data-page="dashboard">
+                        <span>📊</span> Дашборд
+                    </a>
+                    <a href="#" class="nav-item" data-page="users">
+                        <span>👥</span> Пользователи
+                    </a>
+                    <a href="#" class="nav-item" data-page="chats">
+                        <span>💬</span> Чаты
+                    </a>
+                    <a href="#" class="nav-item" data-page="messages">
+                        <span>📨</span> Сообщения
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Основной контент -->
+            <main class="content">
+                <!-- Дашборд -->
+                <div id="dashboardPage" class="page active">
+                    <h2>Статистика</h2>
+                    <div class="stats-grid" id="statsGrid">
+                        <div class="stat-card">
+                            <div class="stat-icon">👥</div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="statUsers">-</div>
+                                <div class="stat-label">Пользователей</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">💬</div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="statChats">-</div>
+                                <div class="stat-label">Чатов</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📨</div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="statMessages">-</div>
+                                <div class="stat-label">Сообщений</div>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-info">
+                                <div class="stat-value" id="statToday">-</div>
+                                <div class="stat-label">Сегодня</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Последние пользователи</h3>
+                        <div id="recentUsers" class="table-container"></div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Активные чаты</h3>
+                        <div id="activeChats" class="table-container"></div>
+                    </div>
+                </div>
+
+                <!-- Пользователи -->
+                <div id="usersPage" class="page">
+                    <div class="page-header">
+                        <h2>Пользователи</h2>
+                        <div class="search-box">
+                            <input type="text" id="userSearch" placeholder="Поиск по email, имени, телефону...">
+                        </div>
+                    </div>
+                    <div id="usersTable" class="table-container"></div>
+                    <div class="pagination" id="usersPagination"></div>
+                </div>
+
+                <!-- Чаты -->
+                <div id="chatsPage" class="page">
+                    <div class="page-header">
+                        <h2>Чаты</h2>
+                        <div class="filter-box">
+                            <select id="chatTypeFilter">
+                                <option value="">Все чаты</option>
+                                <option value="direct">Личные</option>
+                                <option value="group">Группы</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="chatsTable" class="table-container"></div>
+                    <div class="pagination" id="chatsPagination"></div>
+                </div>
+
+                <!-- Сообщения -->
+                <div id="messagesPage" class="page">
+                    <div class="page-header">
+                        <h2>Сообщения</h2>
+                        <div class="search-box">
+                            <input type="text" id="messageChatFilter" placeholder="ID чата (опционально)">
+                        </div>
+                    </div>
+                    <div id="messagesTable" class="table-container"></div>
+                    <div class="pagination" id="messagesPagination"></div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Модальное окно для деталей -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
