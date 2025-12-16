@@ -55,9 +55,28 @@ class AuthRepositoryImpl implements AuthRepository {
           e.type == DioExceptionType.connectionError) {
         throw Exception('Не удалось подключиться к серверу. Проверьте подключение к интернету.');
       }
-      final errorMessage = e.response?.data is Map 
-          ? e.response?.data['message'] 
-          : e.response?.data?.toString() ?? 'Ошибка входа';
+      // Детальная обработка ошибок
+      String errorMessage = 'Ошибка входа';
+      
+      if (e.response != null) {
+        if (e.response!.data is Map) {
+          errorMessage = e.response!.data['message'] ?? 
+                        e.response!.data['error'] ?? 
+                        'Ошибка входа';
+        } else if (e.response!.data is String) {
+          errorMessage = e.response!.data;
+        }
+      } else {
+        // Нет ответа от сервера
+        if (e.type == DioExceptionType.connectionTimeout) {
+          errorMessage = 'Превышено время ожидания. Сервер не отвечает.';
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMessage = 'Не удалось подключиться к серверу. Проверьте подключение к интернету.';
+        } else {
+          errorMessage = 'Ошибка подключения: ${e.message}';
+        }
+      }
+      
       throw Exception(errorMessage);
     } catch (e) {
       print('❌ Unexpected login error: $e');
@@ -137,9 +156,28 @@ class AuthRepositoryImpl implements AuthRepository {
       print('   Data: ${e.response?.data}');
       print('   Message: ${e.message}');
       
-      final errorMessage = e.response?.data is Map 
-          ? e.response?.data['message'] 
-          : e.response?.data?.toString() ?? 'Ошибка регистрации';
+      // Детальная обработка ошибок
+      String errorMessage = 'Ошибка регистрации';
+      
+      if (e.response != null) {
+        if (e.response!.data is Map) {
+          errorMessage = e.response!.data['message'] ?? 
+                        e.response!.data['error'] ?? 
+                        'Ошибка регистрации';
+        } else if (e.response!.data is String) {
+          errorMessage = e.response!.data;
+        }
+      } else {
+        // Нет ответа от сервера
+        if (e.type == DioExceptionType.connectionTimeout) {
+          errorMessage = 'Превышено время ожидания. Сервер не отвечает.';
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMessage = 'Не удалось подключиться к серверу. Проверьте подключение к интернету.';
+        } else {
+          errorMessage = 'Ошибка подключения: ${e.message}';
+        }
+      }
+      
       throw Exception(errorMessage);
     } catch (e) {
       print('❌ Unexpected registration error: $e');

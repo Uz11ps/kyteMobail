@@ -43,7 +43,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final user = await authRepository.login(event.email, event.password);
       emit(AuthAuthenticated(user: user));
     } catch (e) {
-      emit(AuthError(message: e.toString()));
+      // Убираем префикс "Exception: " если он есть
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      emit(AuthError(message: errorMessage));
     }
   }
 
@@ -60,7 +65,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(AuthAuthenticated(user: user));
     } catch (e) {
-      emit(AuthError(message: e.toString()));
+      // Убираем префикс "Exception: " если он есть
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      emit(AuthError(message: errorMessage));
     }
   }
 
