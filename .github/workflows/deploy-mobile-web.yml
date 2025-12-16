@@ -1,0 +1,162 @@
+name: Deploy Flutter Web App to Yandex Cloud
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'lib/**'
+      - 'web/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/deploy-mobile-web.yml'
+  workflow_dispatch: # Позволяет запускать вручную
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build web app
+        run: flutter build web --release --web-renderer html
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to server
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          echo "🚀 Начинаем деплой Flutter веб-приложения..."
+          
+          # Создаем директорию на сервере
+          ssh -i ~/.ssh/deploy_key ${SERVER_USER}@${SERVER_HOST} "
+            sudo mkdir -p /var/www/kyte-mobile/web
+            sudo chown -R ${SERVER_USER}:${SERVER_USER} /var/www/kyte-mobile
+          "
+          
+          # Копируем файлы
+          echo "📤 Копируем файлы на сервер..."
+          scp -i ~/.ssh/deploy_key -r build/web/* ${SERVER_USER}@${SERVER_HOST}:/var/www/kyte-mobile/web/
+          
+          # Настраиваем Nginx
+          echo "🔧 Настраиваем Nginx..."
+          ssh -i ~/.ssh/deploy_key ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
+            # Создаем резервную копию текущей конфигурации
+            sudo cp /etc/nginx/sites-available/kyte-backend /etc/nginx/sites-available/kyte-backend.backup.$(date +%Y%m%d_%H%M%S) || true
+            
+            # Обновляем конфигурацию Nginx
+            sudo tee /etc/nginx/sites-available/kyte-backend > /dev/null <<'NGINX_EOF'
+server {
+    listen 80;
+    server_name _;
+
+    location /mobail {
+        alias /var/www/kyte-mobile/web;
+        try_files $uri $uri/ /mobail/index.html;
+        
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+            expires 1y;
+            add_header Cache-Control "public, immutable";
+        }
+    }
+
+    location /api {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /socket.io {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_cache_bypass $http_upgrade;
+        proxy_connect_timeout 7d;
+        proxy_send_timeout 7d;
+        proxy_read_timeout 7d;
+    }
+
+    location /uploads {
+        alias /var/www/kyte-backend/backend/uploads;
+    }
+
+    location /admin {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    location = / {
+        return 301 /mobail/;
+    }
+}
+NGINX_EOF
+            
+            # Проверяем конфигурацию
+            if sudo nginx -t; then
+              echo "✅ Конфигурация Nginx корректна"
+              sudo systemctl restart nginx
+              echo "✅ Nginx перезапущен"
+            else
+              echo "❌ Ошибка в конфигурации Nginx, восстанавливаем из резервной копии"
+              sudo cp /etc/nginx/sites-available/kyte-backend.backup.* /etc/nginx/sites-available/kyte-backend
+              exit 1
+            fi
+            
+            # Обновляем CORS_ORIGIN
+            cd /var/www/kyte-backend/backend
+            if grep -q "CORS_ORIGIN" .env; then
+              sudo sed -i 's|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|' .env
+            else
+              echo "CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" | sudo tee -a .env
+            fi
+            
+            # Перезапускаем backend для применения CORS
+            sudo pm2 restart kyte-backend || true
+            
+            echo "✅ Деплой завершен!"
+          ENDSSH
+          
+          echo "✅ Flutter веб-приложение успешно развернуто!"
+
+      - name: Check deployment
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+        run: |
+          echo "🔍 Проверка развертывания..."
+          ssh -i ~/.ssh/deploy_key ${SERVER_USER}@${SERVER_HOST} "
+            echo '📁 Проверка файлов:'
+            ls -la /var/www/kyte-mobile/web/ | head -10
+            echo ''
+            echo '🌐 Проверка Nginx:'
+            sudo systemctl status nginx --no-pager | head -5
+          "
+
