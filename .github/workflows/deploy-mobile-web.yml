@@ -92,7 +92,7 @@ jobs:
             sudo pm2 restart kyte-backend || true
             
             echo "✅ Деплой завершен!"
-ENDSSH
+          ENDSSH
           
           echo "✅ Flutter веб-приложение успешно развернуто!"
 
