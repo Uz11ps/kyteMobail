@@ -59,47 +59,110 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       final files = input.files;
       if (files != null && files.isNotEmpty) {
         final file = files[0];
+        final reader = html.FileReader();
         
-        try {
-          setState(() => _isLoading = true);
-          final userRepository = ServiceLocator().userRepository;
-          final dio = ServiceLocator().apiClient.dio;
-          
-          // Создаем FormData для загрузки
-          final formData = FormData.fromMap({
-            'avatar': MultipartFile.fromBytes(
-              await file.readAsBytes(),
-              filename: file.name,
-              contentType: file.type != null && file.type!.isNotEmpty 
-                  ? MediaType.parse(file.type!)
-                  : null,
-            ),
-          });
-          
-          // Загружаем аватар напрямую через Dio
-          final response = await dio.post(
-            '/api/user/avatar',
-            data: formData,
-          );
-          
-          if (response.data != null && response.data['avatarUrl'] != null) {
-            setState(() {
-              _avatarUrl = response.data['avatarUrl'];
-              _isLoading = false;
+        reader.onLoadEnd.listen((e) async {
+          try {
+            setState(() => _isLoading = true);
+            final dio = ServiceLocator().apiClient.dio;
+            
+            // Получаем байты из FileReader (readAsArrayBuffer возвращает ByteBuffer)
+            final result = reader.result;
+            if (result == null) {
+              throw Exception('Не удалось прочитать файл');
+            }
+            
+            // Конвертируем ByteBuffer в List<int>
+            List<int> bytes;
+            if (result is html.Blob) {
+              // Если это Blob, читаем как ArrayBuffer
+              final arrayBuffer = await result.arrayBuffer();
+              bytes = arrayBuffer.asUint8List().toList();
+            } else if (result is html.ByteBuffer) {
+              bytes = result.asUint8List().toList();
+            } else {
+              throw Exception('Неподдерживаемый тип результата');
+            }
+            
+            // Определяем ContentType
+            String? contentType;
+            if (file.type != null && file.type!.isNotEmpty) {
+              contentType = file.type;
+            } else {
+              // Определяем по расширению
+              final ext = file.name.split('.').last.toLowerCase();
+              switch (ext) {
+                case 'jpg':
+                case 'jpeg':
+                  contentType = 'image/jpeg';
+                  break;
+                case 'png':
+                  contentType = 'image/png';
+                  break;
+                case 'gif':
+                  contentType = 'image/gif';
+                  break;
+                case 'webp':
+                  contentType = 'image/webp';
+                  break;
+                default:
+                  contentType = 'image/jpeg';
+              }
+            }
+            
+            // Создаем FormData для загрузки
+            // Для веб используем простую строку для contentType
+            final formData = FormData.fromMap({
+              'avatar': MultipartFile.fromBytes(
+                bytes,
+                filename: file.name,
+              ),
             });
             
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Аватар успешно загружен')),
+            // Устанавливаем Content-Type вручную через заголовки
+            final headers = <String, dynamic>{};
+            if (contentType != null) {
+              headers['Content-Type'] = contentType;
+            }
+            
+            // Загружаем аватар напрямую через Dio
+            final response = await dio.post(
+              '/api/user/avatar',
+              data: formData,
+              options: Options(
+                headers: headers.isNotEmpty ? headers : null,
+              ),
             );
-          } else {
-            throw Exception('URL аватара не получен');
+            
+            if (response.data != null && response.data['avatarUrl'] != null) {
+              setState(() {
+                _avatarUrl = response.data['avatarUrl'];
+                _isLoading = false;
+              });
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Аватар успешно загружен')),
+              );
+            } else {
+              throw Exception('URL аватара не получен');
+            }
+          } catch (e) {
+            setState(() => _isLoading = false);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Ошибка загрузки аватара: $e')),
+            );
           }
-        } catch (e) {
+        });
+        
+        reader.onError.listen((e) {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Ошибка загрузки аватара: $e')),
+            const SnackBar(content: Text('Ошибка чтения файла')),
           );
-        }
+        });
+        
+        // Читаем файл как массив байтов
+        reader.readAsArrayBuffer(file);
       }
     });
   }
