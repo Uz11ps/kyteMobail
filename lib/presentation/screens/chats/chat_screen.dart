@@ -6,6 +6,7 @@ import '../../bloc/chat/chat_bloc.dart';
 import '../../bloc/ai/ai_bloc.dart';
 import '../../bloc/google/google_bloc.dart';
 import '../../../data/models/message_model.dart';
+import '../../../data/models/chat_model.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/network/websocket_client.dart';
 import '../../../core/utils/storage_keys.dart';
