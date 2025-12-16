@@ -190,42 +190,40 @@ class AuthRepositoryImpl implements AuthRepository {
         throw Exception('Ошибка парсинга данных пользователя: ${e.toString()}');
       }
       
-      await _storage.write(
-        key: StorageKeys.accessToken,
-        value: accessToken.toString(),
-      );
-      await _storage.write(
-        key: StorageKeys.refreshToken,
-        value: refreshToken.toString(),
-      );
-      await _storage.write(
-        key: StorageKeys.userId,
-        value: user.id,
-      );
-      await _storage.write(
-        key: StorageKeys.userEmail,
-        value: user.email,
-      );
-
-      print('✅ User data saved: id=${user.id}, email=${user.email}');
-      
-      // Проверяем, что данные действительно сохранились
       try {
-        final savedUserId = await _storage.read(key: StorageKeys.userId);
-        final savedEmail = await _storage.read(key: StorageKeys.userEmail);
-        final savedToken = await _storage.read(key: StorageKeys.accessToken);
+        print('💾 Saving access token...');
+        await _storage.write(
+          key: StorageKeys.accessToken,
+          value: accessToken.toString(),
+        );
+        print('✅ Access token saved');
         
-        print('📋 Verification: userId=$savedUserId, email=$savedEmail, token=${savedToken != null ? "present" : "null"}');
+        print('💾 Saving refresh token...');
+        await _storage.write(
+          key: StorageKeys.refreshToken,
+          value: refreshToken.toString(),
+        );
+        print('✅ Refresh token saved');
         
-        if (savedUserId == null || savedEmail == null || savedToken == null) {
-          print('❌ Ошибка: данные не сохранились в хранилище');
-          throw Exception('Не удалось сохранить данные пользователя');
-        }
+        print('💾 Saving user ID...');
+        await _storage.write(
+          key: StorageKeys.userId,
+          value: user.id,
+        );
+        print('✅ User ID saved: ${user.id}');
         
-        print('✅ Данные подтверждены в хранилище');
+        print('💾 Saving user email...');
+        await _storage.write(
+          key: StorageKeys.userEmail,
+          value: user.email,
+        );
+        print('✅ User email saved: ${user.email}');
+
+        print('✅ All user data saved successfully');
       } catch (e) {
-        print('❌ Ошибка при проверке сохраненных данных: $e');
-        // Не прерываем процесс, так как данные уже сохранены
+        print('❌ Error saving user data: $e');
+        print('   Error type: ${e.runtimeType}');
+        rethrow;
       }
       
       return user;
