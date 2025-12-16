@@ -32,16 +32,36 @@ class _ChatScreenState extends State<ChatScreen> {
   final WebSocketClient _wsClient = ServiceLocator().webSocketClient;
   late final ChatBloc _chatBloc;
   List<MessageModel> _messages = [];
-  final int _memberCount = 4; // Демо значение, можно получать из ChatModel
+  int? _memberCount;
   String? _currentUserId;
+  int? _fileCount;
+  ChatModel? _chat;
 
   @override
   void initState() {
     super.initState();
     _chatBloc = context.read<ChatBloc>();
     _chatBloc.add(MessagesLoadRequested(chatId: widget.chatId));
+    _loadChatData();
     _connectWebSocket();
     _loadCurrentUserId();
+  }
+
+  Future<void> _loadChatData() async {
+    try {
+      final chats = await ServiceLocator().chatRepository.getChats();
+      final chat = chats.firstWhere((c) => c.id == widget.chatId);
+      if (mounted) {
+        setState(() {
+          _chat = chat;
+          _memberCount = chat.participantIds.length;
+          // TODO: Загрузить количество файлов через API
+          _fileCount = 0; // Пока 0, нужно добавить эндпоинт для получения файлов
+        });
+      }
+    } catch (e) {
+      debugPrint('Ошибка загрузки данных чата: $e');
+    }
   }
 
   Future<void> _loadCurrentUserId() async {
@@ -241,7 +261,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                                 _NavigationBar(
                                   chatCount: _messages.length,
-                                  fileCount: 12,
+                                  fileCount: _fileCount ?? 0,
+                                  meetingsCount: _chat?.meetingsCount ?? 0,
                                 ),
                                 // Отступ 20px ниже навигационной панели
                                 const SizedBox(height: 20),
@@ -275,11 +296,11 @@ class _ChatScreenState extends State<ChatScreen> {
 
 class _ChatHeader extends StatelessWidget {
   final String chatName;
-  final int memberCount;
+  final int? memberCount;
 
   const _ChatHeader({
     required this.chatName,
-    required this.memberCount,
+    this.memberCount,
   });
 
   @override
@@ -384,7 +405,9 @@ class _ChatHeader extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '$memberCount members',
+                  memberCount != null 
+                      ? '$memberCount ${_getMemberText(memberCount!)}'
+                      : 'Загрузка...',
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.7),
                     fontSize: 14,
@@ -431,6 +454,16 @@ class _ChatHeader extends StatelessWidget {
       ),
     );
   }
+
+  String _getMemberText(int count) {
+    if (count % 10 == 1 && count % 100 != 11) {
+      return 'человек';
+    } else if (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20)) {
+      return 'человека';
+    } else {
+      return 'человек';
+    }
+  }
 }
 
 class _DiagonalStripePainter extends CustomPainter {
@@ -469,10 +502,12 @@ class _DiagonalStripePainter extends CustomPainter {
 class _NavigationBar extends StatelessWidget {
   final int chatCount;
   final int fileCount;
+  final int meetingsCount;
 
   const _NavigationBar({
     required this.chatCount,
     required this.fileCount,
+    required this.meetingsCount,
   });
 
   @override
@@ -529,26 +564,27 @@ class _NavigationBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Чат с текстом и бейджем 118 (слева)
+              // Чат с текстом и бейджем (слева)
               Padding(
                 padding: const EdgeInsets.all(6), // Отступы вокруг кнопки Chat
                 child: _ChatTabItem(
                   svg: _navIconChat,
-                  badgeValue: '118',
+                  badgeValue: chatCount.toString(),
                 ),
               ),
               // Остальные три иконки справа
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Календарь с бейджем 12
+                  // Календарь с бейджем
                   _ChatTabIcon(
                     svg: _navIconCalendar,
-                    badgeValue: '12',
+                    badgeValue: meetingsCount > 0 ? meetingsCount.toString() : null,
                   ),
-                  // Документ
+                  // Документ с бейджем
                   _ChatTabIcon(
                     svg: _navIconDocument,
+                    badgeValue: fileCount > 0 ? fileCount.toString() : null,
                   ),
                   // Поиск
                   _ChatTabIcon(

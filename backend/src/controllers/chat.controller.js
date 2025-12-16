@@ -1,5 +1,6 @@
 import { Chat } from '../models/Chat.js';
 import { Message } from '../models/Message.js';
+import { User } from '../models/User.js';
 import { io } from '../server.js';
 import { sendPushToChatParticipants } from '../services/push.service.js';
 
@@ -157,18 +158,41 @@ export const sendMessage = async (req, res) => {
       .populate('userId', 'email name')
       .lean();
 
+    if (!populatedMessage) {
+      console.error('Сообщение не найдено после создания:', message._id);
+      return res.status(500).json({ message: 'Сообщение не найдено после создания' });
+    }
+
+    // Проверяем, что userId заполнен
+    if (!populatedMessage.userId) {
+      console.error('userId не заполнен для сообщения:', populatedMessage._id);
+      // Попробуем получить пользователя напрямую
+      const user = await User.findById(userId).lean();
+      populatedMessage.userId = user || { _id: userId, email: 'Неизвестный', name: null };
+    }
+
+    // Преобразуем metadata из Map в объект
+    let metadataObj = null;
+    if (populatedMessage.metadata) {
+      if (populatedMessage.metadata instanceof Map) {
+        metadataObj = Object.fromEntries(populatedMessage.metadata);
+      } else if (typeof populatedMessage.metadata === 'object') {
+        metadataObj = populatedMessage.metadata;
+      }
+    }
+
     const formattedMessage = {
       id: populatedMessage._id.toString(),
       chatId: populatedMessage.chatId.toString(),
-      userId: populatedMessage.userId._id.toString(),
-      userName: populatedMessage.userId.name || populatedMessage.userId.email,
+      userId: populatedMessage.userId?._id?.toString() || userId.toString(),
+      userName: populatedMessage.userId?.name || populatedMessage.userId?.email || 'Неизвестный',
       content: populatedMessage.content,
       type: populatedMessage.type,
       likes: populatedMessage.likes?.map(id => id.toString()) || [],
       likesCount: populatedMessage.likes?.length || 0,
       attachments: populatedMessage.attachments || [],
-      createdAt: populatedMessage.createdAt,
-      metadata: populatedMessage.metadata ? Object.fromEntries(populatedMessage.metadata) : null,
+      createdAt: populatedMessage.createdAt ? new Date(populatedMessage.createdAt).toISOString() : new Date().toISOString(),
+      metadata: metadataObj,
     };
 
     io.to(`chat:${chatId}`).emit('message', formattedMessage);

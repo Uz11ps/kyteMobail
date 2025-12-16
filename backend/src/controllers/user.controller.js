@@ -30,7 +30,13 @@ export const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: 'Пользователь не найден' });
     }
 
-    res.json({ user });
+    // Преобразуем _id в id для совместимости с фронтендом
+    const userResponse = {
+      ...user,
+      id: user._id.toString(),
+    };
+    delete userResponse._id;
+    res.json({ user: userResponse });
   } catch (error) {
     console.error('Ошибка получения пользователя:', error);
     res.status(500).json({ message: 'Ошибка сервера' });

@@ -19,6 +19,9 @@ class ChatModel {
   final DateTime createdAt;
   final DateTime? lastMessageAt;
   final String? lastMessage;
+  final int? unreadCount;
+  final int? likesCount;
+  final int? meetingsCount;
 
   ChatModel({
     required this.id,
@@ -29,6 +32,9 @@ class ChatModel {
     this.inviteCode,
     this.lastMessageAt,
     this.lastMessage,
+    this.unreadCount,
+    this.likesCount,
+    this.meetingsCount,
   });
 
   factory ChatModel.fromJson(Map<String, dynamic> json) =>

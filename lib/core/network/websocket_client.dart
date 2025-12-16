@@ -24,8 +24,9 @@ class WebSocketClient {
       throw Exception('No access token available');
     }
 
-    // Socket.io формат для backend
-    final wsUrl = '${AppConfig.wsBaseUrl}/?chatId=$chatId&token=$token';
+    // Socket.io формат для backend через Nginx proxy
+    final baseUrl = AppConfig.wsBaseUrl.replaceAll('ws://', '').replaceAll('wss://', '');
+    final wsUrl = 'ws://$baseUrl/socket.io/?chatId=$chatId&token=$token&transport=websocket';
     
     _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 

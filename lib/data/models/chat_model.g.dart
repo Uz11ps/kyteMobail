@@ -19,6 +19,9 @@ ChatModel _$ChatModelFromJson(Map<String, dynamic> json) => ChatModel(
           ? null
           : DateTime.parse(json['lastMessageAt'] as String),
       lastMessage: json['lastMessage'] as String?,
+      unreadCount: (json['unreadCount'] as num?)?.toInt(),
+      likesCount: (json['likesCount'] as num?)?.toInt(),
+      meetingsCount: (json['meetingsCount'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$ChatModelToJson(ChatModel instance) => <String, dynamic>{
@@ -30,6 +33,9 @@ Map<String, dynamic> _$ChatModelToJson(ChatModel instance) => <String, dynamic>{
       'createdAt': instance.createdAt.toIso8601String(),
       'lastMessageAt': instance.lastMessageAt?.toIso8601String(),
       'lastMessage': instance.lastMessage,
+      'unreadCount': instance.unreadCount,
+      'likesCount': instance.likesCount,
+      'meetingsCount': instance.meetingsCount,
     };
 
 const _$ChatTypeEnumMap = {

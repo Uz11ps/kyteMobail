@@ -24,8 +24,13 @@ class UserModel {
     this.avatarUrl,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Поддержка _id из MongoDB
+    if (json.containsKey('_id') && !json.containsKey('id')) {
+      json['id'] = json['_id'].toString();
+    }
+    return _$UserModelFromJson(json);
+  }
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 }

@@ -675,10 +675,10 @@ class _ChatCard extends StatelessWidget {
     final seed = _stableSeed(chat.id);
     final lastMessage = chat.lastMessage?.trim();
 
-    // Одна цифра 10, другая 999
-    final messageCount = 10;
-    final favCount = 999;
-    final calendarCount = 1;
+    // Используем реальные данные из API
+    final messageCount = chat.unreadCount ?? 0;
+    final favCount = chat.likesCount ?? 0;
+    final calendarCount = chat.meetingsCount ?? 0;
 
     final time = chat.lastMessageAt != null ? _formatTime(chat.lastMessageAt!) : '';
     final author = _previewAuthor(chat);
