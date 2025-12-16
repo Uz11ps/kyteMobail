@@ -95,19 +95,49 @@ export const getMessages = async (req, res) => {
       .limit(parseInt(limit))
       .lean();
 
-    const formattedMessages = messages.reverse().map(msg => ({
-      id: msg._id.toString(),
-      chatId: msg.chatId.toString(),
-      userId: msg.userId._id.toString(),
-      userName: msg.userId.name || msg.userId.email,
-      content: msg.content,
-      type: msg.type,
-      likes: msg.likes?.map(id => id.toString()) || [],
-      likesCount: msg.likes?.length || 0,
-      attachments: msg.attachments || [],
-      createdAt: msg.createdAt,
-      metadata: msg.metadata ? Object.fromEntries(msg.metadata) : null,
-    }));
+    const formattedMessages = messages.reverse().map(msg => {
+      // Безопасная обработка userId
+      let userIdStr = '';
+      let userNameStr = 'Неизвестный';
+      
+      if (msg.userId) {
+        if (typeof msg.userId === 'object' && msg.userId._id) {
+          userIdStr = msg.userId._id.toString();
+          userNameStr = msg.userId.name || msg.userId.email || 'Неизвестный';
+        } else if (typeof msg.userId === 'string') {
+          userIdStr = msg.userId;
+        } else {
+          userIdStr = msg.userId.toString();
+        }
+      } else {
+        // Если userId не заполнен, используем userId из сообщения напрямую
+        userIdStr = msg.userId ? msg.userId.toString() : '';
+      }
+
+      // Безопасная обработка metadata
+      let metadataObj = null;
+      if (msg.metadata) {
+        if (msg.metadata instanceof Map) {
+          metadataObj = Object.fromEntries(msg.metadata);
+        } else if (typeof msg.metadata === 'object' && msg.metadata !== null) {
+          metadataObj = msg.metadata;
+        }
+      }
+
+      return {
+        id: msg._id.toString(),
+        chatId: msg.chatId.toString(),
+        userId: userIdStr,
+        userName: userNameStr,
+        content: msg.content,
+        type: msg.type,
+        likes: msg.likes?.map(id => id.toString()) || [],
+        likesCount: msg.likes?.length || 0,
+        attachments: msg.attachments || [],
+        createdAt: msg.createdAt ? new Date(msg.createdAt).toISOString() : new Date().toISOString(),
+        metadata: metadataObj,
+      };
+    });
 
     res.json({ messages: formattedMessages });
   } catch (error) {

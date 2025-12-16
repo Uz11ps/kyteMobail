@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import '../config/app_config.dart';
 import '../utils/storage_keys.dart';
@@ -24,25 +25,14 @@ class WebSocketClient {
       throw Exception('No access token available');
     }
 
-    // Socket.io формат для backend через Nginx proxy
-    final baseUrl = AppConfig.wsBaseUrl.replaceAll('ws://', '').replaceAll('wss://', '');
-    final wsUrl = 'ws://$baseUrl/socket.io/?chatId=$chatId&token=$token&transport=websocket';
+    // Для веб Socket.io использует HTTP polling вместо WebSocket
+    // Временно отключаем WebSocket для веб, используем только HTTP polling через периодические запросы
+    // TODO: Добавить socket_io_client для полноценной поддержки Socket.io
     
-    _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-
-    if (_channel != null) {
-      _channel!.stream.listen(
-        (message) {
-          _messageController?.add(message);
-        },
-        onError: (error) {
-          _messageController?.addError(error);
-        },
-        onDone: () {
-          _messageController?.close();
-        },
-      );
-    }
+    // Пока WebSocket не работает на веб, просто создаем пустой стрим
+    // Сообщения будут приходить через HTTP запросы
+    debugPrint('⚠️ WebSocket подключение временно отключено для веб-платформы');
+    debugPrint('   Сообщения будут обновляться через HTTP запросы');
   }
 
   void sendMessage(dynamic message) {
