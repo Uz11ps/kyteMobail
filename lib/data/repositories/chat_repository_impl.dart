@@ -39,16 +39,45 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<List<ChatModel>> getChats() async {
     try {
+      print('📋 Loading chats...');
       final response = await _dio.get(ApiEndpoints.chats);
+      print('✅ Chats response: ${response.statusCode}');
+      print('   Data: ${response.data}');
+      
+      if (response.data == null) {
+        print('⚠️ Response data is null');
+        return [];
+      }
+      
       final data = _extractList(response.data, key: 'chats');
-      return data
+      print('📋 Extracted ${data.length} chats');
+      
+      final chats = data
           .whereType<Map<String, dynamic>>()
-          .map(ChatModel.fromJson)
+          .map((json) {
+            try {
+              return ChatModel.fromJson(json);
+            } catch (e) {
+              print('❌ Error parsing chat: $e, json: $json');
+              return null;
+            }
+          })
+          .whereType<ChatModel>()
           .toList();
+      
+      print('✅ Parsed ${chats.length} chats successfully');
+      return chats;
     } on DioException catch (e) {
+      print('❌ DioException loading chats: ${e.type}');
+      print('   Status: ${e.response?.statusCode}');
+      print('   Data: ${e.response?.data}');
+      print('   Message: ${e.message}');
       throw Exception(
         _extractErrorMessage(e.response?.data, 'Ошибка загрузки чатов'),
       );
+    } catch (e) {
+      print('❌ Unexpected error loading chats: $e');
+      throw Exception('Ошибка загрузки чатов: ${e.toString()}');
     }
   }
 
@@ -78,11 +107,16 @@ class ChatRepositoryImpl implements ChatRepository {
         ApiEndpoints.sendMessageToChat(chatId),
         data: {'content': content},
       );
+      if (response.data == null || response.data['message'] == null) {
+        throw Exception('Ответ сервера не содержит данных сообщения');
+      }
       return MessageModel.fromJson(response.data['message']);
     } on DioException catch (e) {
       throw Exception(
         _extractErrorMessage(e.response?.data, 'Ошибка отправки сообщения'),
       );
+    } catch (e) {
+      throw Exception('Ошибка отправки сообщения: ${e.toString()}');
     }
   }
 
@@ -96,11 +130,16 @@ class ChatRepositoryImpl implements ChatRepository {
           'participantIds': participantIds,
         },
       );
+      if (response.data == null || response.data['group'] == null) {
+        throw Exception('Ответ сервера не содержит данных группы');
+      }
       return ChatModel.fromJson(response.data['group']);
     } on DioException catch (e) {
       throw Exception(
         _extractErrorMessage(e.response?.data, 'Ошибка создания группы'),
       );
+    } catch (e) {
+      throw Exception('Ошибка создания группы: ${e.toString()}');
     }
   }
 
@@ -111,11 +150,16 @@ class ChatRepositoryImpl implements ChatRepository {
         ApiEndpoints.joinGroup,
         data: {'inviteCode': inviteCode},
       );
+      if (response.data == null || response.data['group'] == null) {
+        throw Exception('Ответ сервера не содержит данных группы');
+      }
       return ChatModel.fromJson(response.data['group']);
     } on DioException catch (e) {
       throw Exception(
         _extractErrorMessage(e.response?.data, 'Ошибка присоединения к группе'),
       );
+    } catch (e) {
+      throw Exception('Ошибка присоединения к группе: ${e.toString()}');
     }
   }
 }

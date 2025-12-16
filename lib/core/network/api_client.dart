@@ -58,7 +58,7 @@ class ApiClient {
           // Логирование ошибок для отладки
           print('❌ API Error: ${error.requestOptions.method} ${error.requestOptions.baseUrl}${error.requestOptions.path}');
           print('   Status: ${error.response?.statusCode}');
-          print('   Message: ${error.response?.data ?? error.message}');
+          print('   Message: ${error.response?.data ?? error.message ?? "Unknown error"}');
           
           final isUnauthorized = error.response?.statusCode == 401;
           final isRefreshRequest = error.requestOptions.path.endsWith(ApiEndpoints.refreshToken);
@@ -66,14 +66,18 @@ class ApiClient {
 
           if (isUnauthorized && !isRefreshRequest && !skipRefresh) {
             // Попытка обновить токен
-            final refreshed = await (_refreshInFlight ??= _refreshToken());
-            _refreshInFlight = null;
-            if (refreshed) {
-              final token = await _storage.read(key: StorageKeys.accessToken);
-              if (token != null && token.isNotEmpty) {
-                error.requestOptions.headers['Authorization'] = 'Bearer $token';
-                return handler.resolve(await _dio.fetch(error.requestOptions));
+            try {
+              final refreshed = await (_refreshInFlight ??= _refreshToken());
+              _refreshInFlight = null;
+              if (refreshed) {
+                final token = await _storage.read(key: StorageKeys.accessToken);
+                if (token != null && token.isNotEmpty) {
+                  error.requestOptions.headers['Authorization'] = 'Bearer $token';
+                  return handler.resolve(await _dio.fetch(error.requestOptions));
+                }
               }
+            } catch (e) {
+              print('❌ Error refreshing token: $e');
             }
           }
           return handler.next(error);
