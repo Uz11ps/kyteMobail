@@ -26,6 +26,11 @@ class ApiEndpoints {
   // Google
   static const String createGoogleMeet = '/google/meet/create';
   
+  // User Profile
+  static const String getCurrentUser = '/user/me';
+  static const String updateProfile = '/user/profile';
+  static const String uploadAvatar = '/user/avatar';
+  
   static String messagesForChat(String chatId) => messages.replaceAll('{chatId}', chatId);
   static String sendMessageToChat(String chatId) => sendMessage.replaceAll('{chatId}', chatId);
 }

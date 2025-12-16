@@ -6,6 +6,9 @@ import '../../bloc/auth/auth_bloc.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/repositories/auth_repository_impl.dart';
 import '../../../core/di/service_locator.dart';
+import '../../../core/config/app_config.dart';
+import 'package:intl/intl.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -26,14 +29,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserData() async {
-    final authRepository = ServiceLocator().authRepository;
-    final user = await authRepository.getCurrentUser();
-    setState(() {
-      _user = user;
-      // Демо данные для полей, которых нет в UserModel
-      _birthday = '15.03.1990';
-      _about = 'Разработчик мобильных приложений';
-    });
+    try {
+      final userRepository = ServiceLocator().userRepository;
+      final user = await userRepository.getCurrentUser();
+      setState(() {
+        _user = user;
+        _birthday = user.birthday != null ? DateFormat('dd.MM.yyyy').format(user.birthday!) : null;
+        _about = user.about;
+      });
+    } catch (e) {
+      // Fallback на authRepository если userRepository не работает
+      final authRepository = ServiceLocator().authRepository;
+      final user = await authRepository.getCurrentUser();
+      setState(() {
+        _user = user;
+        _birthday = null;
+        _about = null;
+      });
+    }
+  }
+
+  Future<void> _editProfile() async {
+    if (_user == null) return;
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => EditProfileScreen(user: _user!),
+      ),
+    );
+    if (result == true) {
+      _loadUserData();
+    }
   }
 
   String _getInitials(String? name) {
@@ -177,7 +202,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48), // Отступ для симметрии
+                      // Кнопка редактирования
+                      SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: _editProfile,
+                            borderRadius: BorderRadius.circular(18),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Positioned.fill(
+                                  child: ClipOval(
+                                    child: BackdropFilter(
+                                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                                      child: const SizedBox.expand(),
+                                    ),
+                                  ),
+                                ),
+                                Positioned.fill(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Colors.white.withOpacity(0.06),
+                                          Colors.black.withOpacity(0.6),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned.fill(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.black.withOpacity(0.2),
+                                    ),
+                                  ),
+                                ),
+                                Positioned.fill(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white.withOpacity(0.18),
+                                        width: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Center(
+                                  child: SvgPicture.string(
+                                    '''
+                                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                      <path d="M14.1667 2.5C14.3855 2.28113 14.6454 2.10751 14.9313 1.98906C15.2173 1.87061 15.5238 1.80957 15.8333 1.80957C16.1429 1.80957 16.4494 1.87061 16.7353 1.98906C17.0213 2.10751 17.2812 2.28113 17.5 2.5C17.7189 2.71887 17.8925 2.97881 18.0109 3.26476C18.1294 3.55072 18.1904 3.85724 18.1904 4.16667C18.1904 4.47609 18.1294 4.78261 18.0109 5.06857C17.8925 5.35452 17.7189 5.61446 17.5 5.83333L6.25 17.0833L1.66667 18.3333L2.91667 13.75L14.1667 2.5Z" stroke="#D6DBE2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    ''',
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -191,37 +285,67 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Аватарка слева
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.12),
-                          width: 1,
-                        ),
-                        gradient: _user != null
-                            ? LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  _getAvatarColor(_user!.id),
-                                  _getAvatarColor(_user!.id),
-                                ],
-                              )
-                            : null,
-                        color: _user == null ? const Color(0xFF7F00FF) : null,
-                      ),
-                      child: Center(
-                        child: Text(
-                          _getInitials(_user?.name),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 48,
+                    Builder(
+                      builder: (context) {
+                        final baseUrl = AppConfig.apiBaseUrl.replaceAll('/api', '');
+                        final avatarUrl = _user?.avatarUrl != null && _user!.avatarUrl!.startsWith('http')
+                            ? _user!.avatarUrl
+                            : _user?.avatarUrl != null
+                                ? '$baseUrl${_user!.avatarUrl}'
+                                : null;
+
+                        return Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.12),
+                              width: 1,
+                            ),
+                            gradient: _user != null && avatarUrl == null
+                                ? LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      _getAvatarColor(_user!.id),
+                                      _getAvatarColor(_user!.id),
+                                    ],
+                                  )
+                                : null,
+                            color: _user == null ? const Color(0xFF7F00FF) : null,
                           ),
-                        ),
-                      ),
+                          child: avatarUrl != null
+                              ? ClipOval(
+                                  child: Image.network(
+                                    avatarUrl,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Center(
+                                        child: Text(
+                                          _getInitials(_user?.name),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 48,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                )
+                              : Center(
+                                  child: Text(
+                                    _getInitials(_user?.name),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 48,
+                                    ),
+                                  ),
+                                ),
+                        );
+                      },
                     ),
                     const SizedBox(width: 16),
                     // Блоки справа
@@ -234,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               Expanded(
                                 child: _ProfileField(
                                   label: 'Никнейм',
-                                  value: _user?.name ?? 'Не указан',
+                                  value: _user?.nickname ?? _user?.name ?? 'Не указан',
                                 ),
                               ),
                               const SizedBox(width: 12),

@@ -24,6 +24,17 @@ const userSchema = new mongoose.Schema({
     type: String,
     trim: true,
   },
+  nickname: {
+    type: String,
+    trim: true,
+  },
+  about: {
+    type: String,
+    trim: true,
+  },
+  birthday: {
+    type: Date,
+  },
   avatarUrl: {
     type: String,
   },

@@ -8,6 +8,9 @@ class UserModel {
   final String email;
   final String? phone;
   final String? name;
+  final String? nickname;
+  final String? about;
+  final DateTime? birthday;
   final String? avatarUrl;
 
   UserModel({
@@ -15,6 +18,9 @@ class UserModel {
     required this.email,
     this.phone,
     this.name,
+    this.nickname,
+    this.about,
+    this.birthday,
     this.avatarUrl,
   });
 

@@ -2,10 +2,12 @@ import '../../data/repositories/auth_repository_impl.dart';
 import '../../data/repositories/chat_repository_impl.dart';
 import '../../data/repositories/ai_repository_impl.dart';
 import '../../data/repositories/google_repository_impl.dart';
+import '../../data/repositories/user_repository_impl.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../../domain/repositories/ai_repository.dart';
 import '../../domain/repositories/google_repository.dart';
+import '../../domain/repositories/user_repository.dart';
 import '../network/api_client.dart';
 import '../network/websocket_client.dart';
 
@@ -23,5 +25,6 @@ class ServiceLocator {
   late final ChatRepository chatRepository = ChatRepositoryImpl(apiClient.dio);
   late final AIRepository aiRepository = AIRepositoryImpl(apiClient.dio);
   late final GoogleRepository googleRepository = GoogleRepositoryImpl(apiClient.dio);
+  late final UserRepository userRepository = UserRepositoryImpl(apiClient.dio);
 }
 

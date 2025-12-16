@@ -43,7 +43,9 @@ export const createGroup = async (req, res) => {
         type: populatedGroup.type,
         participantIds: populatedGroup.participants.map(p => p._id.toString()),
         inviteCode: populatedGroup.inviteCode,
-        createdAt: populatedGroup.createdAt,
+        createdAt: populatedGroup.createdAt ? new Date(populatedGroup.createdAt).toISOString() : new Date().toISOString(),
+        lastMessageAt: null,
+        lastMessage: null,
       },
     });
   } catch (error) {
@@ -87,7 +89,9 @@ export const joinGroup = async (req, res) => {
         type: populatedGroup.type,
         participantIds: populatedGroup.participants.map(p => p._id.toString()),
         inviteCode: populatedGroup.inviteCode,
-        createdAt: populatedGroup.createdAt,
+        createdAt: populatedGroup.createdAt ? new Date(populatedGroup.createdAt).toISOString() : new Date().toISOString(),
+        lastMessageAt: populatedGroup.lastMessageAt ? new Date(populatedGroup.lastMessageAt).toISOString() : null,
+        lastMessage: null,
       },
     });
   } catch (error) {
