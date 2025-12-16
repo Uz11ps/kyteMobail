@@ -7,6 +7,7 @@ import '../../presentation/screens/chats/chat_screen.dart';
 import '../../presentation/screens/groups/group_create_screen.dart';
 import '../../presentation/screens/groups/group_join_screen.dart';
 import '../../presentation/screens/settings/settings_screen.dart';
+import '../../presentation/screens/profile/profile_screen.dart';
 
 class AppRouter {
   static const String splash = '/';
@@ -17,6 +18,7 @@ class AppRouter {
   static const String groupCreate = '/group/create';
   static const String groupJoin = '/group/join';
   static const String settings = '/settings';
+  static const String profile = '/profile';
 
   static Route<dynamic> generateRoute(RouteSettings routeSettings) {
     switch (routeSettings.name) {
@@ -55,6 +57,10 @@ class AppRouter {
       case settings:
         return MaterialPageRoute(
           builder: (_) => const SettingsScreen(),
+        );
+      case profile:
+        return MaterialPageRoute(
+          builder: (_) => const ProfileScreen(),
         );
       default:
         return MaterialPageRoute(

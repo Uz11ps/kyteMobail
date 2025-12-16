@@ -42,7 +42,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
               children: [
                 _ChatsHeader(
                   onCreate: () => Navigator.of(context).pushNamed(AppRouter.groupCreate),
-                  onProfile: () => Navigator.of(context).pushNamed(AppRouter.settings),
+                  onProfile: () => Navigator.of(context).pushNamed(AppRouter.profile),
                 ),
                 Expanded(
                   child: BlocBuilder<ChatBloc, ChatState>(
