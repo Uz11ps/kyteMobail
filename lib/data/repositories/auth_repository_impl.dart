@@ -191,6 +191,18 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       print('✅ User data saved: id=${user.id}, email=${user.email}');
+      
+      // Проверяем, что данные действительно сохранились
+      final savedUserId = await _storage.read(key: StorageKeys.userId);
+      final savedEmail = await _storage.read(key: StorageKeys.userEmail);
+      final savedToken = await _storage.read(key: StorageKeys.accessToken);
+      
+      if (savedUserId == null || savedEmail == null || savedToken == null) {
+        print('❌ Ошибка: данные не сохранились в хранилище');
+        throw Exception('Не удалось сохранить данные пользователя');
+      }
+      
+      print('✅ Данные подтверждены в хранилище');
       return user;
     } on DioException catch (e) {
       print('❌ Registration error: ${e.type}');

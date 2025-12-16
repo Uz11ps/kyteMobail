@@ -12,7 +12,9 @@ class WebSocketClient {
 
   Stream<dynamic> get messageStream {
     _messageController ??= StreamController<dynamic>.broadcast();
-    _messageStream ??= _messageController!.stream;
+    if (_messageStream == null) {
+      _messageStream = _messageController!.stream;
+    }
     return _messageStream!;
   }
 
@@ -27,17 +29,19 @@ class WebSocketClient {
     
     _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
 
-    _channel!.stream.listen(
-      (message) {
-        _messageController?.add(message);
-      },
-      onError: (error) {
-        _messageController?.addError(error);
-      },
-      onDone: () {
-        _messageController?.close();
-      },
-    );
+    if (_channel != null) {
+      _channel!.stream.listen(
+        (message) {
+          _messageController?.add(message);
+        },
+        onError: (error) {
+          _messageController?.addError(error);
+        },
+        onDone: () {
+          _messageController?.close();
+        },
+      );
+    }
   }
 
   void sendMessage(dynamic message) {

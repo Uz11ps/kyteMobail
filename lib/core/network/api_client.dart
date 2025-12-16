@@ -70,8 +70,10 @@ class ApiClient {
             _refreshInFlight = null;
             if (refreshed) {
               final token = await _storage.read(key: StorageKeys.accessToken);
-              error.requestOptions.headers['Authorization'] = 'Bearer $token';
-              return handler.resolve(await _dio.fetch(error.requestOptions));
+              if (token != null && token.isNotEmpty) {
+                error.requestOptions.headers['Authorization'] = 'Bearer $token';
+                return handler.resolve(await _dio.fetch(error.requestOptions));
+              }
             }
           }
           return handler.next(error);
@@ -113,11 +115,14 @@ class ApiClient {
       );
 
       if (response.statusCode == 200) {
-        await _storage.write(
-          key: StorageKeys.accessToken,
-          value: response.data['accessToken'],
-        );
-        return true;
+        final accessToken = response.data?['accessToken'];
+        if (accessToken != null && accessToken.toString().isNotEmpty) {
+          await _storage.write(
+            key: StorageKeys.accessToken,
+            value: accessToken.toString(),
+          );
+          return true;
+        }
       }
       return false;
     } catch (e) {
