@@ -171,7 +171,24 @@ class AuthRepositoryImpl implements AuthRepository {
         throw Exception('Токен обновления не получен');
       }
 
-      final user = UserModel.fromJson(userData);
+      // Проверяем наличие обязательных полей пользователя
+      if (userData['id'] == null || userData['id'].toString().isEmpty) {
+        throw Exception('ID пользователя не получен');
+      }
+      if (userData['email'] == null || userData['email'].toString().isEmpty) {
+        throw Exception('Email пользователя не получен');
+      }
+
+      print('📋 Parsing user data: $userData');
+      UserModel user;
+      try {
+        user = UserModel.fromJson(userData);
+        print('✅ User parsed successfully: id=${user.id}, email=${user.email}');
+      } catch (e) {
+        print('❌ Error parsing user: $e');
+        print('   User data: $userData');
+        throw Exception('Ошибка парсинга данных пользователя: ${e.toString()}');
+      }
       
       await _storage.write(
         key: StorageKeys.accessToken,
@@ -193,16 +210,24 @@ class AuthRepositoryImpl implements AuthRepository {
       print('✅ User data saved: id=${user.id}, email=${user.email}');
       
       // Проверяем, что данные действительно сохранились
-      final savedUserId = await _storage.read(key: StorageKeys.userId);
-      final savedEmail = await _storage.read(key: StorageKeys.userEmail);
-      final savedToken = await _storage.read(key: StorageKeys.accessToken);
-      
-      if (savedUserId == null || savedEmail == null || savedToken == null) {
-        print('❌ Ошибка: данные не сохранились в хранилище');
-        throw Exception('Не удалось сохранить данные пользователя');
+      try {
+        final savedUserId = await _storage.read(key: StorageKeys.userId);
+        final savedEmail = await _storage.read(key: StorageKeys.userEmail);
+        final savedToken = await _storage.read(key: StorageKeys.accessToken);
+        
+        print('📋 Verification: userId=$savedUserId, email=$savedEmail, token=${savedToken != null ? "present" : "null"}');
+        
+        if (savedUserId == null || savedEmail == null || savedToken == null) {
+          print('❌ Ошибка: данные не сохранились в хранилище');
+          throw Exception('Не удалось сохранить данные пользователя');
+        }
+        
+        print('✅ Данные подтверждены в хранилище');
+      } catch (e) {
+        print('❌ Ошибка при проверке сохраненных данных: $e');
+        // Не прерываем процесс, так как данные уже сохранены
       }
       
-      print('✅ Данные подтверждены в хранилище');
       return user;
     } on DioException catch (e) {
       print('❌ Registration error: ${e.type}');
