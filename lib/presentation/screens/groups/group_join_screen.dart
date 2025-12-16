@@ -96,7 +96,7 @@ class _GroupJoinScreenState extends State<GroupJoinScreen> {
                   const SizedBox(height: 24),
                   BlocBuilder<ChatBloc, ChatState>(
                     builder: (context, state) {
-                      final isLoading = state is ChatLoading;
+                      final isLoading = state is GroupJoinLoading;
                       return ElevatedButton(
                         onPressed: isLoading ? null : _joinGroup,
                         style: ElevatedButton.styleFrom(

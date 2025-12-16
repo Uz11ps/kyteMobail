@@ -7,11 +7,12 @@ import '../utils/storage_keys.dart';
 class ApiClient {
   late final Dio _dio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  Future<bool>? _refreshInFlight;
 
   ApiClient() {
     _dio = Dio(
       BaseOptions(
-        baseUrl: AppConfig.apiBaseUrl,
+        baseUrl: _normalizeApiBaseUrl(AppConfig.apiBaseUrl),
         connectTimeout: const Duration(seconds: 30),
         receiveTimeout: const Duration(seconds: 30),
         headers: {
@@ -30,9 +31,14 @@ class ApiClient {
           return handler.next(options);
         },
         onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
+          final isUnauthorized = error.response?.statusCode == 401;
+          final isRefreshRequest = error.requestOptions.path.endsWith(ApiEndpoints.refreshToken);
+          final skipRefresh = error.requestOptions.extra['skipAuthRefresh'] == true;
+
+          if (isUnauthorized && !isRefreshRequest && !skipRefresh) {
             // Попытка обновить токен
-            final refreshed = await _refreshToken();
+            final refreshed = await (_refreshInFlight ??= _refreshToken());
+            _refreshInFlight = null;
             if (refreshed) {
               final token = await _storage.read(key: StorageKeys.accessToken);
               error.requestOptions.headers['Authorization'] = 'Bearer $token';
@@ -45,6 +51,27 @@ class ApiClient {
     );
   }
 
+  static String _normalizeApiBaseUrl(String raw) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) return trimmed;
+
+    Uri uri;
+    try {
+      uri = Uri.parse(trimmed);
+    } catch (_) {
+      return trimmed;
+    }
+
+    final segments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+    if (segments.isNotEmpty && segments.last == 'api') {
+      return uri.toString();
+    }
+
+    final nextSegments = [...segments, 'api'];
+    final normalized = uri.replace(pathSegments: nextSegments);
+    return normalized.toString();
+  }
+
   Future<bool> _refreshToken() async {
     try {
       final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
@@ -52,6 +79,7 @@ class ApiClient {
 
       final response = await _dio.post(
         ApiEndpoints.refreshToken,
+        options: Options(extra: {'skipAuthRefresh': true}),
         data: {'refreshToken': refreshToken},
       );
 

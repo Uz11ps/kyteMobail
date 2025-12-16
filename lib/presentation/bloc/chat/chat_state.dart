@@ -9,7 +9,13 @@ abstract class ChatState extends Equatable {
 
 class ChatInitial extends ChatState {}
 
-class ChatLoading extends ChatState {}
+class ChatsLoading extends ChatState {}
+
+class MessagesLoading extends ChatState {}
+
+class GroupCreateLoading extends ChatState {}
+
+class GroupJoinLoading extends ChatState {}
 
 class ChatsLoaded extends ChatState {
   final List<ChatModel> chats;

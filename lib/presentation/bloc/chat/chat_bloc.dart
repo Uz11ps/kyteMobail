@@ -23,7 +23,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     ChatsLoadRequested event,
     Emitter<ChatState> emit,
   ) async {
-    emit(ChatLoading());
+    emit(ChatsLoading());
     try {
       final chats = await chatRepository.getChats();
       emit(ChatsLoaded(chats: chats));
@@ -36,7 +36,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     MessagesLoadRequested event,
     Emitter<ChatState> emit,
   ) async {
-    emit(ChatLoading());
+    emit(MessagesLoading());
     try {
       final messages = await chatRepository.getMessages(event.chatId);
       emit(MessagesLoaded(messages: messages));
@@ -77,7 +77,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     GroupCreateRequested event,
     Emitter<ChatState> emit,
   ) async {
-    emit(ChatLoading());
+    emit(GroupCreateLoading());
     try {
       final group = await chatRepository.createGroup(
         event.name,
@@ -93,7 +93,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     GroupJoinRequested event,
     Emitter<ChatState> emit,
   ) async {
-    emit(ChatLoading());
+    emit(GroupJoinLoading());
     try {
       final group = await chatRepository.joinGroup(event.inviteCode);
       emit(GroupJoined(group: group));

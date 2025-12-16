@@ -41,12 +41,6 @@ class _GroupCreateScreenState extends State<GroupCreateScreen> {
 
   void _createGroup() {
     if (!_formKey.currentState!.validate()) return;
-    if (_participantIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Добавьте хотя бы одного участника')),
-      );
-      return;
-    }
 
     context.read<ChatBloc>().add(
           GroupCreateRequested(
@@ -61,7 +55,6 @@ class _GroupCreateScreenState extends State<GroupCreateScreen> {
     return BlocListener<ChatBloc, ChatState>(
       listener: (context, state) {
         if (state is GroupCreated) {
-          Navigator.of(context).pop();
           Navigator.of(context).pushReplacementNamed(
             AppRouter.chat,
             arguments: {
@@ -101,7 +94,7 @@ class _GroupCreateScreenState extends State<GroupCreateScreen> {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'Участники',
+                    'Участники (опционально)',
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
@@ -129,20 +122,22 @@ class _GroupCreateScreenState extends State<GroupCreateScreen> {
                   ),
                   const SizedBox(height: 16),
                   if (_participantIds.isNotEmpty) ...[
-                    ..._participantIds.map((id) => Card(
-                          child: ListTile(
-                            title: Text(id),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () => _removeParticipant(id),
-                            ),
+                    ..._participantIds.map(
+                      (id) => Card(
+                        child: ListTile(
+                          title: Text(id),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => _removeParticipant(id),
                           ),
-                        )),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 16),
                   ],
                   BlocBuilder<ChatBloc, ChatState>(
                     builder: (context, state) {
-                      final isLoading = state is ChatLoading;
+                      final isLoading = state is GroupCreateLoading;
                       return ElevatedButton(
                         onPressed: isLoading ? null : _createGroup,
                         style: ElevatedButton.styleFrom(
