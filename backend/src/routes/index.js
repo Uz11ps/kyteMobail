@@ -6,6 +6,8 @@ import aiRoutes from './ai.routes.js';
 import googleRoutes from './google.routes.js';
 import userRoutes from './user.routes.js';
 import adminRoutes from './admin.routes.js';
+import fileRoutes from './file.routes.js';
+import messageRoutes from './message.routes.js';
 
 const router = express.Router();
 
@@ -16,6 +18,8 @@ router.use('/ai', aiRoutes);
 router.use('/google', googleRoutes);
 router.use('/user', userRoutes);
 router.use('/admin', adminRoutes);
+router.use('/', fileRoutes);
+router.use('/', messageRoutes);
 
 router.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });

@@ -81,13 +81,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.white.withValues(alpha: 0.06),
-                        Colors.black.withValues(alpha: 0.6),
+                        Colors.white.withOpacity(0.06),
+                        Colors.black.withOpacity(0.6),
                       ],
                     ),
                     border: Border(
                       bottom: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: Colors.white.withOpacity(0.1),
                         width: 1,
                       ),
                     ),
@@ -122,8 +122,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                         colors: [
-                                          Colors.white.withValues(alpha: 0.06),
-                                          Colors.black.withValues(alpha: 0.6),
+                                          Colors.white.withOpacity(0.06),
+                                          Colors.black.withOpacity(0.6),
                                         ],
                                       ),
                                     ),
@@ -133,7 +133,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   child: DecoratedBox(
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: Colors.black.withValues(alpha: 0.2),
+                                      color: Colors.black.withOpacity(0.2),
                                     ),
                                   ),
                                 ),
@@ -142,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
                                       border: Border.all(
-                                        color: Colors.white.withValues(alpha: 0.18),
+                                        color: Colors.white.withOpacity(0.18),
                                         width: 1,
                                       ),
                                     ),
@@ -197,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12),
+                          color: Colors.white.withOpacity(0.12),
                           width: 1,
                         ),
                         gradient: _user != null
@@ -317,16 +317,16 @@ class _ProfileField extends StatelessWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                Colors.white.withValues(alpha: 0.06),
-                Colors.black.withValues(alpha: 0.6),
+                Colors.white.withOpacity(0.06),
+                Colors.black.withOpacity(0.6),
               ],
             ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.18),
+              color: Colors.white.withOpacity(0.18),
               width: 1,
             ),
-            color: Colors.black.withValues(alpha: 0.2),
+            color: Colors.black.withOpacity(0.2),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,7 +335,7 @@ class _ProfileField extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.7),
+                  color: Colors.white.withOpacity(0.7),
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),

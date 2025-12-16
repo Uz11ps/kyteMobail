@@ -22,6 +22,33 @@ const messageSchema = new mongoose.Schema({
     enum: ['text', 'ai', 'system'],
     default: 'text',
   },
+  likes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+  }],
+  attachments: [{
+    url: {
+      type: String,
+      required: true,
+    },
+    type: {
+      type: String,
+      enum: ['image', 'document', 'video', 'audio', 'other'],
+      default: 'other',
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    size: {
+      type: Number,
+      default: 0,
+    },
+    uploadedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
   metadata: {
     type: Map,
     of: mongoose.Schema.Types.Mixed,

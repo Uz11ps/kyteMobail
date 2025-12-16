@@ -65,7 +65,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                                   Icon(
                                     Icons.chat_bubble_outline,
                                     size: 56,
-                                    color: Colors.white.withValues(alpha: 0.6),
+                                    color: Colors.white.withOpacity(0.6),
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
@@ -79,7 +79,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                                   Text(
                                     'Создайте группу или присоединитесь к существующей',
                                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: Colors.white.withValues(alpha: 0.7),
+                                          color: Colors.white.withOpacity(0.7),
                                         ),
                                     textAlign: TextAlign.center,
                                   ),
@@ -125,7 +125,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                                 Text(
                                   state.message,
                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: Colors.white.withValues(alpha: 0.75),
+                                        color: Colors.white.withOpacity(0.75),
                                       ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -229,7 +229,7 @@ class _KyteLogoPainter extends CustomPainter {
     // Shadow params from SVG filter:
     // dy=0.521739, blur std=1.30435, opacity=0.2
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.20)
+      ..color = Colors.black.withOpacity(0.20)
       ..style = PaintingStyle.fill
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 1.30435);
 
@@ -401,7 +401,7 @@ class _EditIconPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.92)
+      ..color = Colors.white.withOpacity(0.92)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round
@@ -499,7 +499,7 @@ class _ProfileIconPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.92)
+      ..color = Colors.white.withOpacity(0.92)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0
       ..strokeCap = StrokeCap.round
@@ -592,8 +592,8 @@ class _GlassCircle extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    const Color(0xFF2A3441).withValues(alpha: 0.50),
-                    const Color(0xFF0B1320).withValues(alpha: 0.85),
+                    const Color(0xFF2A3441).withOpacity(0.50),
+                    const Color(0xFF0B1320).withOpacity(0.85),
                   ],
                 ),
               ),
@@ -612,8 +612,8 @@ class _GlassCircle extends StatelessWidget {
                       center: const Alignment(-0.45, -0.55),
                       radius: 0.95,
                       colors: [
-                        Colors.white.withValues(alpha: 0.10),
-                        Colors.white.withValues(alpha: 0.03),
+                        Colors.white.withOpacity(0.10),
+                        Colors.white.withOpacity(0.03),
                         Colors.transparent,
                       ],
                       stops: const [0.0, 0.55, 1.0],
@@ -635,7 +635,7 @@ class _GlassCircle extends StatelessWidget {
                     radius: 0.92,
                     colors: [
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.26),
+                      Colors.black.withOpacity(0.26),
                     ],
                     stops: const [0.65, 1.0],
                   ),
@@ -650,7 +650,7 @@ class _GlassCircle extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.18),
+                  color: Colors.white.withOpacity(0.18),
                   width: 1,
                 ),
               ),
@@ -674,8 +674,6 @@ class _ChatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final seed = _stableSeed(chat.id);
     final lastMessage = chat.lastMessage?.trim();
-    final chatNameLower = chat.name.toLowerCase();
-    final isMvp = chatNameLower.contains('mvp');
 
     // Одна цифра 10, другая 999
     final messageCount = 10;
@@ -705,13 +703,13 @@ class _ChatCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.22),
+                color: Colors.black.withOpacity(0.22),
                 blurRadius: 16,
                 offset: const Offset(0, 8),
               ),
             ],
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.06),
+              color: Colors.white.withOpacity(0.06),
             ),
           ),
           child: Padding(
@@ -767,10 +765,10 @@ class _ChatCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1B2330).withValues(alpha: 0.75),
+                    color: const Color(0xFF1B2330).withOpacity(0.75),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.06),
+                      color: Colors.white.withOpacity(0.06),
                     ),
                   ),
                   child: author.isEmpty
@@ -782,7 +780,7 @@ class _ChatCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.80),
+                                      color: Colors.white.withOpacity(0.80),
                                       fontWeight: FontWeight.w500,
                                     ),
                               ),
@@ -792,7 +790,7 @@ class _ChatCard extends StatelessWidget {
                               Text(
                                 time,
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white.withValues(alpha: 0.60),
+                                      color: Colors.white.withOpacity(0.60),
                                       fontWeight: FontWeight.w500,
                                     ),
                               ),
@@ -820,7 +818,7 @@ class _ChatCard extends StatelessWidget {
                                   Text(
                                     time,
                                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Colors.white.withValues(alpha: 0.60),
+                                          color: Colors.white.withOpacity(0.60),
                                           fontWeight: FontWeight.w500,
                                         ),
                                   ),
@@ -833,7 +831,7 @@ class _ChatCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.82),
+                                    color: Colors.white.withOpacity(0.82),
                                     fontWeight: FontWeight.w500,
                                   ),
                             ),
@@ -849,12 +847,7 @@ class _ChatCard extends StatelessWidget {
   }
 
   String _previewAuthor(ChatModel chat) {
-    // Для точного совпадения с макетом (скрин): показываем автора в демо-чате.
     // В проде лучше отдавать lastMessageAuthorName с backend и прокинуть в ChatModel.
-    final lowered = chat.name.toLowerCase();
-    if (lowered.contains('mvp')) {
-      return 'Dmitry Bilyk';
-    }
     return '';
   }
 
@@ -961,7 +954,7 @@ class _StatCountBadge extends StatelessWidget {
         color: const Color(0xFF232B36),
         borderRadius: BorderRadius.circular(isLongNumber ? 9 : 999),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
+          color: Colors.white.withOpacity(0.12),
           width: 1,
         ),
       ),
@@ -1007,49 +1000,6 @@ class _ChatAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chatNameLower = chat.name.toLowerCase();
-    final isMvp = chatNameLower.contains('mvp');
-    
-    if (isMvp) {
-      // Специальный дизайн для MVP чата
-      return Container(
-        height: 54,
-        width: 54,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: const Color(0xFF0B1320),
-        ),
-        child: ClipOval(
-          child: Stack(
-            children: [
-              // Темный фон
-              Container(
-                color: const Color(0xFF0B1320),
-              ),
-              // Диагональная сине-фиолетовая полоса
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _DiagonalStripePainter(),
-                ),
-              ),
-              // Белый текст "MVP"
-              Center(
-                child: Text(
-                  'MVP',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    // Оригинальный дизайн для остальных чатов
     final seed = chat.id.codeUnits.fold<int>(0, (acc, v) => (acc + v) & 0x7fffffff);
     final colors = _gradientFromSeed(seed);
     final initials = _initials(chat.name);
@@ -1060,7 +1010,7 @@ class _ChatAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
+          color: Colors.white.withOpacity(0.12),
           width: 1,
         ),
         gradient: LinearGradient(

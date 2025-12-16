@@ -8,7 +8,7 @@ const chatSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['direct', 'group'],
+    enum: ['direct', 'group', 'ai'],
     required: true,
   },
   participants: [{
@@ -33,6 +33,22 @@ const chatSchema = new mongoose.Schema({
   lastMessageAt: {
     type: Date,
   },
+  // Для отслеживания прочитанных сообщений
+  readBy: [{
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    lastReadMessageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Message',
+    },
+    lastReadAt: {
+      type: Date,
+      default: Date.now,
+    },
+  }],
   createdAt: {
     type: Date,
     default: Date.now,

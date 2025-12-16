@@ -20,6 +20,11 @@ class ApiEndpoints {
   // AI
   static const String askAI = '/ai/ask';
   static const String aiSuggestions = '/ai/suggestions';
+  static const String aiChat = '/ai/chat';
+  static const String aiChatHistory = '/ai/chat/history';
+  
+  // Google
+  static const String createGoogleMeet = '/google/meet/create';
   
   static String messagesForChat(String chatId) => messages.replaceAll('{chatId}', chatId);
   static String sendMessageToChat(String chatId) => sendMessage.replaceAll('{chatId}', chatId);

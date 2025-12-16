@@ -82,10 +82,10 @@ export const askAI = async (chatId, question, userId) => {
                        /создай.*встреч|организуй.*встреч/i.test(aiResponse);
 
     // Создание сообщения от AI
-    // Используем userId для связи с пользователем, который задал вопрос
+    // Для AI чата используем специальный userId или оставляем userId пользователя
     const message = new Message({
       chatId,
-      userId: userId,
+      userId: userId, // Сохраняем userId пользователя для связи
       content: aiResponse,
       type: 'ai',
       metadata: {
@@ -96,15 +96,27 @@ export const askAI = async (chatId, question, userId) => {
 
     await message.save();
 
+    // Обновляем последнее сообщение в чате
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: message._id,
+      lastMessageAt: message.createdAt,
+      updatedAt: Date.now(),
+    });
+
+    const populatedMessage = await Message.findById(message._id)
+      .populate('userId', 'email name')
+      .lean();
+
     return {
       message: {
-        id: message._id.toString(),
-        chatId: message.chatId.toString(),
-        userId: message.userId.toString(),
-        content: message.content,
-        type: message.type,
-        createdAt: message.createdAt,
-        metadata: message.metadata ? Object.fromEntries(message.metadata) : null,
+        id: populatedMessage._id.toString(),
+        chatId: populatedMessage.chatId.toString(),
+        userId: populatedMessage.userId._id.toString(),
+        userName: 'Kyte', // Имя AI ассистента
+        content: populatedMessage.content,
+        type: populatedMessage.type,
+        createdAt: populatedMessage.createdAt,
+        metadata: populatedMessage.metadata ? Object.fromEntries(populatedMessage.metadata) : null,
       },
     };
   } catch (error) {

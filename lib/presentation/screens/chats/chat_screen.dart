@@ -193,7 +193,7 @@ class _ChatScreenState extends State<ChatScreen> {
                             child: Text(
                               'Нет сообщений',
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Colors.white.withValues(alpha: 0.7),
+                                    color: Colors.white.withOpacity(0.7),
                                   ),
                             ),
                           );
@@ -227,8 +227,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  Colors.white.withValues(alpha: 0.06),
-                                  Colors.black.withValues(alpha: 0.6),
+                                  Colors.white.withOpacity(0.06),
+                                  Colors.black.withOpacity(0.6),
                                 ],
                               ),
                             ),
@@ -284,8 +284,6 @@ class _ChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMvp = chatName.toLowerCase().contains('mvp');
-    
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Stack(
@@ -325,8 +323,8 @@ class _ChatHeader extends StatelessWidget {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Colors.white.withValues(alpha: 0.06),
-                                  Colors.black.withValues(alpha: 0.6),
+                                  Colors.white.withOpacity(0.06),
+                                  Colors.black.withOpacity(0.6),
                                 ],
                               ),
                             ),
@@ -337,7 +335,7 @@ class _ChatHeader extends StatelessWidget {
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.black.withValues(alpha: 0.2),
+                              color: Colors.black.withOpacity(0.2),
                             ),
                           ),
                         ),
@@ -347,7 +345,7 @@ class _ChatHeader extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.18),
+                                color: Colors.white.withOpacity(0.18),
                                 width: 1,
                               ),
                             ),
@@ -388,7 +386,7 @@ class _ChatHeader extends StatelessWidget {
                 Text(
                   '$memberCount members',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
@@ -401,59 +399,26 @@ class _ChatHeader extends StatelessWidget {
             top: 0,
             bottom: 0,
             child: Center(
-              child: isMvp
-                  ? Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: const Color(0xFF0B1320),
-                      ),
-                      child: ClipOval(
-                        child: Stack(
-                          children: [
-                            Container(
-                              color: const Color(0xFF0B1320),
-                            ),
-                            Positioned.fill(
-                              child: CustomPaint(
-                                painter: _DiagonalStripePainter(),
-                              ),
-                            ),
-                            Center(
-                              child: Text(
-                                'MVP',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.12),
-                          width: 1,
-                        ),
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
-                        ),
-                      ),
-                      child: Center(
-                        child: Text(
-                          chatName.split(' ').map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').take(2).join(),
-                          style: const TextStyle(
-                            color: Colors.white,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.12),
+                    width: 1,
+                  ),
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    chatName.split(' ').map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').take(2).join(),
+                    style: const TextStyle(
+                      color: Colors.white,
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
@@ -539,8 +504,8 @@ class _NavigationBar extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withValues(alpha: 0.06),
-                    Colors.black.withValues(alpha: 0.6),
+                    Colors.white.withOpacity(0.06),
+                    Colors.black.withOpacity(0.6),
                   ],
                 ),
               ),
@@ -551,9 +516,9 @@ class _NavigationBar extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(100),
-                color: Colors.black.withValues(alpha: 0.2),
+                color: Colors.black.withOpacity(0.2),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: Colors.white.withOpacity(0.1),
                   width: 1,
                 ),
               ),
@@ -665,7 +630,7 @@ class _ChatTabItem extends StatelessWidget {
                   color: const Color(0xFF232B36),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: Colors.white.withOpacity(0.12),
                     width: 1,
                   ),
                 ),
@@ -742,7 +707,7 @@ class _ChatTabIcon extends StatelessWidget {
                   color: const Color(0xFF232B36),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.12),
+                    color: Colors.white.withOpacity(0.12),
                     width: 1,
                   ),
                 ),
@@ -858,7 +823,7 @@ class _StatCountBadge extends StatelessWidget {
         color: const Color(0xFF232B36),
         borderRadius: BorderRadius.circular(isLongNumber ? 9 : 999),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.12),
+          color: Colors.white.withOpacity(0.12),
           width: 1,
         ),
       ),
@@ -928,13 +893,13 @@ class _MessageItem extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A2332).withValues(alpha: 0.6),
+              color: const Color(0xFF1A2332).withOpacity(0.6),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(
               message.content,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.7),
+                    color: Colors.white.withOpacity(0.7),
                   ),
             ),
           ),
@@ -973,7 +938,7 @@ class _MessageItem extends StatelessWidget {
                       child: Text(
                         message.content,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.9),
+                              color: Colors.white.withOpacity(0.9),
                             ),
                       ),
                     ),
@@ -987,7 +952,7 @@ class _MessageItem extends StatelessWidget {
                           Text(
                             time,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withValues(alpha: 0.5),
+                                  color: Colors.white.withOpacity(0.5),
                                   fontSize: 11,
                                 ),
                           ),
@@ -995,7 +960,7 @@ class _MessageItem extends StatelessWidget {
                           Icon(
                             Icons.done_all,
                             size: 14,
-                            color: Colors.white.withValues(alpha: 0.6),
+                            color: Colors.white.withOpacity(0.6),
                           ),
                         ],
                       ),
@@ -1056,7 +1021,7 @@ class _MessageItem extends StatelessWidget {
                     child: Text(
                       message.content,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.9),
+                            color: Colors.white.withOpacity(0.9),
                           ),
                     ),
                   ),
@@ -1084,7 +1049,7 @@ class _MessageItem extends StatelessWidget {
                         Text(
                           time,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.5),
+                                color: Colors.white.withOpacity(0.5),
                                 fontSize: 11,
                               ),
                         ),
@@ -1092,7 +1057,7 @@ class _MessageItem extends StatelessWidget {
                         Icon(
                           Icons.done_all,
                           size: 14,
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: Colors.white.withOpacity(0.6),
                         ),
                       ],
                     ),
@@ -1246,8 +1211,8 @@ class _GlassButton extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        Colors.white.withValues(alpha: 0.06),
-                        Colors.black.withValues(alpha: 0.6),
+                        Colors.white.withOpacity(0.06),
+                        Colors.black.withOpacity(0.6),
                       ],
                     ),
                   ),
@@ -1258,7 +1223,7 @@ class _GlassButton extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.black.withValues(alpha: 0.2),
+                    color: Colors.black.withOpacity(0.2),
                   ),
                 ),
               ),
@@ -1268,7 +1233,7 @@ class _GlassButton extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.18),
+                      color: Colors.white.withOpacity(0.18),
                       width: 1,
                     ),
                   ),
@@ -1362,8 +1327,8 @@ class _GlassInputFieldState extends State<_GlassInputField> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withValues(alpha: 0.06),
-                    Colors.black.withValues(alpha: 0.6),
+                    Colors.white.withOpacity(0.06),
+                    Colors.black.withOpacity(0.6),
                   ],
                 ),
               ),
@@ -1374,7 +1339,7 @@ class _GlassInputFieldState extends State<_GlassInputField> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
-                color: Colors.black.withValues(alpha: 0.2),
+                color: Colors.black.withOpacity(0.2),
               ),
             ),
           ),
@@ -1384,7 +1349,7 @@ class _GlassInputFieldState extends State<_GlassInputField> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.18),
+                  color: Colors.white.withOpacity(0.18),
                   width: 1,
                 ),
               ),
@@ -1616,13 +1581,13 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.white.withValues(alpha: 0.06),
-                          Colors.black.withValues(alpha: 0.6),
+                          Colors.white.withOpacity(0.06),
+                          Colors.black.withOpacity(0.6),
                         ],
                       ),
                       border: Border(
                         bottom: BorderSide(
-                          color: Colors.white.withValues(alpha: 0.1),
+                          color: Colors.white.withOpacity(0.1),
                           width: 1,
                         ),
                       ),
@@ -1655,7 +1620,7 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
                               Text(
                                 'Your private chat',
                                 style: TextStyle(
-                                  color: Colors.white.withValues(alpha: 0.7),
+                                  color: Colors.white.withOpacity(0.7),
                                   fontSize: 14,
                                 ),
                               ),
@@ -1669,30 +1634,24 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
                           height: 44,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: const Color(0xFF0B1320),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.12),
+                              width: 1,
+                            ),
+                            gradient: const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
+                            ),
                           ),
-                          child: ClipOval(
-                            child: Stack(
-                              children: [
-                                Container(
-                                  color: const Color(0xFF0B1320),
-                                ),
-                                Positioned.fill(
-                                  child: CustomPaint(
-                                    painter: _DiagonalStripePainter(),
-                                  ),
-                                ),
-                                const Center(
-                                  child: Text(
-                                    'MVP',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                          child: const Center(
+                            child: Text(
+                              'K',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         ),
@@ -1813,7 +1772,7 @@ class _PopupMessageItem extends StatelessWidget {
                   child: Text(
                     message.content,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.9),
+                          color: Colors.white.withOpacity(0.9),
                         ),
                   ),
                 ),
@@ -1827,7 +1786,7 @@ class _PopupMessageItem extends StatelessWidget {
                       Text(
                         time,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.5),
+                              color: Colors.white.withOpacity(0.5),
                               fontSize: 11,
                             ),
                       ),
@@ -1836,7 +1795,7 @@ class _PopupMessageItem extends StatelessWidget {
                         Icon(
                           Icons.done_all,
                           size: 14,
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: Colors.white.withOpacity(0.6),
                         ),
                       ],
                     ],

@@ -31,6 +31,10 @@ build/
 *.db
 *.sqlite
 
+# Uploads
+uploads/
+!uploads/.gitkeep
+
 # Testing
 coverage/
 .nyc_output/

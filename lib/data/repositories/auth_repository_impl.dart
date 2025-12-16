@@ -13,35 +13,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserModel> login(String email, String password) async {
-    // Демо-режим: тестовый пользователь
-    if (email == '123@mail.ru' && password == '123123') {
-      final demoUser = UserModel(
-        id: 'demo-user-123',
-        email: email,
-        name: 'Тестовый пользователь',
-      );
-      
-      await _storage.write(
-        key: StorageKeys.accessToken,
-        value: 'demo-token-${DateTime.now().millisecondsSinceEpoch}',
-      );
-      await _storage.write(
-        key: StorageKeys.refreshToken,
-        value: 'demo-refresh-token',
-      );
-      await _storage.write(
-        key: StorageKeys.userId,
-        value: demoUser.id,
-      );
-      await _storage.write(
-        key: StorageKeys.userEmail,
-        value: demoUser.email,
-      );
-
-      return demoUser;
-    }
-
     try {
+      print('🔐 Attempting login for: $email');
+      
       final response = await _dio.post(
         ApiEndpoints.login,
         data: {
@@ -49,6 +23,8 @@ class AuthRepositoryImpl implements AuthRepository {
           'password': password,
         },
       );
+
+      print('✅ Login successful, response: ${response.data}');
 
       final user = UserModel.fromJson(response.data['user']);
       await _storage.write(
@@ -70,12 +46,21 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return user;
     } on DioException catch (e) {
+      print('❌ Login error: ${e.type}');
+      print('   Status: ${e.response?.statusCode}');
+      print('   Data: ${e.response?.data}');
+      print('   Message: ${e.message}');
+      
       if (e.type == DioExceptionType.connectionTimeout || 
           e.type == DioExceptionType.connectionError) {
         throw Exception('Не удалось подключиться к серверу. Проверьте подключение к интернету.');
       }
-      throw Exception(e.response?.data['message'] ?? 'Ошибка входа');
+      final errorMessage = e.response?.data is Map 
+          ? e.response?.data['message'] 
+          : e.response?.data?.toString() ?? 'Ошибка входа';
+      throw Exception(errorMessage);
     } catch (e) {
+      print('❌ Unexpected login error: $e');
       throw Exception('Ошибка подключения: ${e.toString()}');
     }
   }
@@ -113,35 +98,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserModel> register(String email, String password, {String? name}) async {
-    // Демо-режим: автоматическая регистрация
-    final demoUser = UserModel(
-      id: 'demo-user-${DateTime.now().millisecondsSinceEpoch}',
-      email: email,
-      name: name ?? 'Пользователь',
-    );
-    
-    await _storage.write(
-      key: StorageKeys.accessToken,
-      value: 'demo-token-${DateTime.now().millisecondsSinceEpoch}',
-    );
-    await _storage.write(
-      key: StorageKeys.refreshToken,
-      value: 'demo-refresh-token',
-    );
-    await _storage.write(
-      key: StorageKeys.userId,
-      value: demoUser.id,
-    );
-    await _storage.write(
-      key: StorageKeys.userEmail,
-      value: demoUser.email,
-    );
-
-    return demoUser;
-
-    // Раскомментируйте для реального backend:
-    /*
     try {
+      print('📝 Attempting registration for: $email');
+      
       final response = await _dio.post(
         ApiEndpoints.register,
         data: {
@@ -150,6 +109,8 @@ class AuthRepositoryImpl implements AuthRepository {
           if (name != null) 'name': name,
         },
       );
+
+      print('✅ Registration successful, response: ${response.data}');
 
       final user = UserModel.fromJson(response.data['user']);
       await _storage.write(
@@ -171,9 +132,19 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return user;
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Ошибка регистрации');
+      print('❌ Registration error: ${e.type}');
+      print('   Status: ${e.response?.statusCode}');
+      print('   Data: ${e.response?.data}');
+      print('   Message: ${e.message}');
+      
+      final errorMessage = e.response?.data is Map 
+          ? e.response?.data['message'] 
+          : e.response?.data?.toString() ?? 'Ошибка регистрации';
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('❌ Unexpected registration error: $e');
+      throw Exception('Ошибка подключения: ${e.toString()}');
     }
-    */
   }
 
   @override

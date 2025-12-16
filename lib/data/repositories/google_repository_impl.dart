@@ -35,7 +35,7 @@ class GoogleRepositoryImpl implements GoogleRepository {
   Future<String> createGoogleMeet() async {
     try {
       final response = await _dio.post(
-        '/google/meet/create',
+        ApiEndpoints.createGoogleMeet,
         data: {},
       );
       return response.data['meetUrl'] as String;

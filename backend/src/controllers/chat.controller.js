@@ -15,15 +15,54 @@ export const getChats = async (req, res) => {
       .sort({ lastMessageAt: -1, updatedAt: -1 })
       .lean();
 
-    const formattedChats = chats.map(chat => ({
-      id: chat._id.toString(),
-      name: chat.name,
-      type: chat.type,
-      participantIds: chat.participants.map(p => p._id.toString()),
-      inviteCode: chat.inviteCode,
-      createdAt: chat.createdAt,
-      lastMessageAt: chat.lastMessageAt,
-      lastMessage: chat.lastMessage?.content,
+    // Получаем статистику для каждого чата
+    const formattedChats = await Promise.all(chats.map(async (chat) => {
+      // Непрочитанные сообщения
+      const userReadData = chat.readBy?.find(
+        read => read.userId.toString() === userId.toString()
+      );
+      const lastReadMessageId = userReadData?.lastReadMessageId;
+      
+      let unreadCount = 0;
+      if (lastReadMessageId) {
+        unreadCount = await Message.countDocuments({
+          chatId: chat._id,
+          createdAt: { $gt: userReadData.lastReadAt || new Date(0) },
+        });
+      } else if (chat.lastMessageAt) {
+        // Если пользователь никогда не читал, считаем все сообщения непрочитанными
+        unreadCount = await Message.countDocuments({
+          chatId: chat._id,
+        });
+      }
+
+      // Общее количество лайков в чате
+      const likesResult = await Message.aggregate([
+        { $match: { chatId: chat._id } },
+        { $project: { likesCount: { $size: { $ifNull: ['$likes', []] } } } },
+        { $group: { _id: null, totalLikes: { $sum: '$likesCount' } } },
+      ]);
+      const likesCount = likesResult[0]?.totalLikes || 0;
+
+      // Количество встреч (сообщения с meetUrl в metadata)
+      const meetingsCount = await Message.countDocuments({
+        chatId: chat._id,
+        'metadata.meetUrl': { $exists: true },
+      });
+
+      return {
+        id: chat._id.toString(),
+        name: chat.name,
+        type: chat.type,
+        participantIds: chat.participants.map(p => p._id.toString()),
+        inviteCode: chat.inviteCode,
+        createdAt: chat.createdAt,
+        lastMessageAt: chat.lastMessageAt,
+        lastMessage: chat.lastMessage?.content,
+        unreadCount,
+        likesCount,
+        meetingsCount,
+      };
     }));
 
     res.json({ chats: formattedChats });
@@ -62,6 +101,9 @@ export const getMessages = async (req, res) => {
       userName: msg.userId.name || msg.userId.email,
       content: msg.content,
       type: msg.type,
+      likes: msg.likes?.map(id => id.toString()) || [],
+      likesCount: msg.likes?.length || 0,
+      attachments: msg.attachments || [],
       createdAt: msg.createdAt,
       metadata: msg.metadata ? Object.fromEntries(msg.metadata) : null,
     }));
@@ -122,6 +164,9 @@ export const sendMessage = async (req, res) => {
       userName: populatedMessage.userId.name || populatedMessage.userId.email,
       content: populatedMessage.content,
       type: populatedMessage.type,
+      likes: populatedMessage.likes?.map(id => id.toString()) || [],
+      likesCount: populatedMessage.likes?.length || 0,
+      attachments: populatedMessage.attachments || [],
       createdAt: populatedMessage.createdAt,
       metadata: populatedMessage.metadata ? Object.fromEntries(populatedMessage.metadata) : null,
     };

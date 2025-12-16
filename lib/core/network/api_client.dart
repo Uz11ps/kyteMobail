@@ -24,13 +24,42 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          final token = await _storage.read(key: StorageKeys.accessToken);
-          if (token != null) {
-            options.headers['Authorization'] = 'Bearer $token';
+          // Не добавляем токен для login и register запросов
+          final isAuthRequest = options.path.contains('/auth/login') || 
+                                options.path.contains('/auth/register');
+          
+          if (!isAuthRequest) {
+            final token = await _storage.read(key: StorageKeys.accessToken);
+            if (token != null) {
+              options.headers['Authorization'] = 'Bearer $token';
+            }
           }
+          
+          // Логирование для отладки
+          final fullUrl = '${options.baseUrl}${options.path}';
+          print('🌐 API Request: ${options.method} $fullUrl');
+          if (options.data != null) {
+            print('📦 Request Data: ${options.data}');
+          }
+          if (options.headers['Authorization'] != null) {
+            print('🔑 Authorization: ${options.headers['Authorization']?.substring(0, 20)}...');
+          }
+          
           return handler.next(options);
         },
+        onResponse: (response, handler) {
+          print('✅ API Response: ${response.statusCode} ${response.requestOptions.path}');
+          if (response.data != null) {
+            print('📥 Response Data: ${response.data}');
+          }
+          return handler.next(response);
+        },
         onError: (error, handler) async {
+          // Логирование ошибок для отладки
+          print('❌ API Error: ${error.requestOptions.method} ${error.requestOptions.baseUrl}${error.requestOptions.path}');
+          print('   Status: ${error.response?.statusCode}');
+          print('   Message: ${error.response?.data ?? error.message}');
+          
           final isUnauthorized = error.response?.statusCode == 401;
           final isRefreshRequest = error.requestOptions.path.endsWith(ApiEndpoints.refreshToken);
           final skipRefresh = error.requestOptions.extra['skipAuthRefresh'] == true;
