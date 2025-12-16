@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
 import 'dart:html' as html;
+import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../../../data/models/user_model.dart';
 import '../../../core/di/service_locator.dart';
@@ -66,7 +67,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             setState(() => _isLoading = true);
             final dio = ServiceLocator().apiClient.dio;
             
-            // Получаем байты из FileReader (readAsArrayBuffer возвращает ByteBuffer)
+            // Получаем байты из FileReader (readAsArrayBuffer возвращает ByteBuffer из dart:typed_data)
             final result = reader.result;
             if (result == null) {
               throw Exception('Не удалось прочитать файл');
@@ -74,14 +75,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             
             // Конвертируем ByteBuffer в List<int>
             List<int> bytes;
-            if (result is html.Blob) {
-              // Если это Blob, читаем как ArrayBuffer
-              final arrayBuffer = await result.arrayBuffer();
-              bytes = arrayBuffer.asUint8List().toList();
-            } else if (result is html.ByteBuffer) {
+            if (result is ByteBuffer) {
               bytes = result.asUint8List().toList();
             } else {
-              throw Exception('Неподдерживаемый тип результата');
+              throw Exception('Неподдерживаемый тип результата: ${result.runtimeType}');
             }
             
             // Определяем ContentType
