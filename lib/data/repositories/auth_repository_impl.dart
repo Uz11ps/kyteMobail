@@ -26,14 +26,34 @@ class AuthRepositoryImpl implements AuthRepository {
 
       print('✅ Login successful, response: ${response.data}');
 
-      final user = UserModel.fromJson(response.data['user']);
+      // Проверяем наличие необходимых данных в ответе
+      if (response.data == null) {
+        throw Exception('Пустой ответ от сервера');
+      }
+
+      final userData = response.data['user'];
+      final accessToken = response.data['accessToken'];
+      final refreshToken = response.data['refreshToken'];
+
+      if (userData == null) {
+        throw Exception('Данные пользователя не получены');
+      }
+      if (accessToken == null || accessToken.toString().isEmpty) {
+        throw Exception('Токен доступа не получен');
+      }
+      if (refreshToken == null || refreshToken.toString().isEmpty) {
+        throw Exception('Токен обновления не получен');
+      }
+
+      final user = UserModel.fromJson(userData);
+      
       await _storage.write(
         key: StorageKeys.accessToken,
-        value: response.data['accessToken'],
+        value: accessToken.toString(),
       );
       await _storage.write(
         key: StorageKeys.refreshToken,
-        value: response.data['refreshToken'],
+        value: refreshToken.toString(),
       );
       await _storage.write(
         key: StorageKeys.userId,
@@ -44,6 +64,7 @@ class AuthRepositoryImpl implements AuthRepository {
         value: user.email,
       );
 
+      print('✅ User data saved: id=${user.id}, email=${user.email}');
       return user;
     } on DioException catch (e) {
       print('❌ Login error: ${e.type}');
@@ -131,14 +152,34 @@ class AuthRepositoryImpl implements AuthRepository {
 
       print('✅ Registration successful, response: ${response.data}');
 
-      final user = UserModel.fromJson(response.data['user']);
+      // Проверяем наличие необходимых данных в ответе
+      if (response.data == null) {
+        throw Exception('Пустой ответ от сервера');
+      }
+
+      final userData = response.data['user'];
+      final accessToken = response.data['accessToken'];
+      final refreshToken = response.data['refreshToken'];
+
+      if (userData == null) {
+        throw Exception('Данные пользователя не получены');
+      }
+      if (accessToken == null || accessToken.toString().isEmpty) {
+        throw Exception('Токен доступа не получен');
+      }
+      if (refreshToken == null || refreshToken.toString().isEmpty) {
+        throw Exception('Токен обновления не получен');
+      }
+
+      final user = UserModel.fromJson(userData);
+      
       await _storage.write(
         key: StorageKeys.accessToken,
-        value: response.data['accessToken'],
+        value: accessToken.toString(),
       );
       await _storage.write(
         key: StorageKeys.refreshToken,
-        value: response.data['refreshToken'],
+        value: refreshToken.toString(),
       );
       await _storage.write(
         key: StorageKeys.userId,
@@ -149,6 +190,7 @@ class AuthRepositoryImpl implements AuthRepository {
         value: user.email,
       );
 
+      print('✅ User data saved: id=${user.id}, email=${user.email}');
       return user;
     } on DioException catch (e) {
       print('❌ Registration error: ${e.type}');
