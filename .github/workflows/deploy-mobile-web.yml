@@ -58,19 +58,19 @@ jobs:
           
           # Настраиваем Nginx
           echo "🔧 Настраиваем Nginx..."
-          ssh -i ~/.ssh/deploy_key ${SERVER_USER}@${SERVER_HOST} bash -c '
+          ssh -i ~/.ssh/deploy_key ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
             # Создаем резервную копию текущей конфигурации
             sudo cp /etc/nginx/sites-available/kyte-backend /etc/nginx/sites-available/kyte-backend.backup.$(date +%Y%m%d_%H%M%S) || true
             
-            # Создаем конфигурацию Nginx
-            sudo tee /etc/nginx/sites-available/kyte-backend > /dev/null <<EOF
+            # Создаем конфигурацию Nginx через cat с here-document
+            cat > /tmp/nginx-config.conf << 'NGINX_EOF'
 server {
     listen 80;
     server_name _;
 
     location /mobail {
         alias /var/www/kyte-mobile/web;
-        try_files \$uri \$uri/ /mobail/index.html;
+        try_files $uri $uri/ /mobail/index.html;
         
         location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
             expires 1y;
@@ -81,21 +81,21 @@ server {
     location /api {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     location /socket.io {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_cache_bypass \$http_upgrade;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_cache_bypass $http_upgrade;
         proxy_connect_timeout 7d;
         proxy_send_timeout 7d;
         proxy_read_timeout 7d;
@@ -108,16 +108,20 @@ server {
     location /admin {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
 
     location = / {
         return 301 /mobail/;
     }
 }
-EOF
+NGINX_EOF
+            
+            # Копируем конфигурацию в нужное место
+            sudo cp /tmp/nginx-config.conf /etc/nginx/sites-available/kyte-backend
+            rm -f /tmp/nginx-config.conf
             
             # Проверяем конфигурацию
             if sudo nginx -t; then
@@ -142,7 +146,7 @@ EOF
             sudo pm2 restart kyte-backend || true
             
             echo "✅ Деплой завершен!"
-          '
+ENDSSH
           
           echo "✅ Flutter веб-приложение успешно развернуто!"
 
