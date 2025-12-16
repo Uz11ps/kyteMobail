@@ -1,13 +1,13 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../models/user_model.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/utils/storage_keys.dart';
+import '../../core/storage/storage_service.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final Dio _dio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final StorageService _storage = StorageService.instance;
 
   AuthRepositoryImpl(this._dio);
 
@@ -47,22 +47,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
       final user = UserModel.fromJson(userData);
       
-      await _storage.write(
-        key: StorageKeys.accessToken,
-        value: accessToken.toString(),
-      );
-      await _storage.write(
-        key: StorageKeys.refreshToken,
-        value: refreshToken.toString(),
-      );
-      await _storage.write(
-        key: StorageKeys.userId,
-        value: user.id,
-      );
-      await _storage.write(
-        key: StorageKeys.userEmail,
-        value: user.email,
-      );
+      await _storage.write(StorageKeys.accessToken, accessToken.toString());
+      await _storage.write(StorageKeys.refreshToken, refreshToken.toString());
+      await _storage.write(StorageKeys.userId, user.id);
+      await _storage.write(StorageKeys.userEmail, user.email);
 
       print('✅ User data saved: id=${user.id}, email=${user.email}');
       return user;
@@ -117,18 +105,9 @@ class AuthRepositoryImpl implements AuthRepository {
       );
 
       final user = UserModel.fromJson(response.data['user']);
-      await _storage.write(
-        key: StorageKeys.accessToken,
-        value: response.data['accessToken'],
-      );
-      await _storage.write(
-        key: StorageKeys.refreshToken,
-        value: response.data['refreshToken'],
-      );
-      await _storage.write(
-        key: StorageKeys.userId,
-        value: user.id,
-      );
+      await _storage.write(StorageKeys.accessToken, response.data['accessToken'].toString());
+      await _storage.write(StorageKeys.refreshToken, response.data['refreshToken'].toString());
+      await _storage.write(StorageKeys.userId, user.id);
 
       return user;
     } on DioException catch (e) {
@@ -192,31 +171,19 @@ class AuthRepositoryImpl implements AuthRepository {
       
       try {
         print('💾 Saving access token...');
-        await _storage.write(
-          key: StorageKeys.accessToken,
-          value: accessToken.toString(),
-        );
+        await _storage.write(StorageKeys.accessToken, accessToken.toString());
         print('✅ Access token saved');
         
         print('💾 Saving refresh token...');
-        await _storage.write(
-          key: StorageKeys.refreshToken,
-          value: refreshToken.toString(),
-        );
+        await _storage.write(StorageKeys.refreshToken, refreshToken.toString());
         print('✅ Refresh token saved');
         
         print('💾 Saving user ID...');
-        await _storage.write(
-          key: StorageKeys.userId,
-          value: user.id,
-        );
+        await _storage.write(StorageKeys.userId, user.id);
         print('✅ User ID saved: ${user.id}');
         
         print('💾 Saving user email...');
-        await _storage.write(
-          key: StorageKeys.userEmail,
-          value: user.email,
-        );
+        await _storage.write(StorageKeys.userEmail, user.email);
         print('✅ User email saved: ${user.email}');
 
         print('✅ All user data saved successfully');
@@ -269,8 +236,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserModel?> getCurrentUser() async {
-    final userId = await _storage.read(key: StorageKeys.userId);
-    final email = await _storage.read(key: StorageKeys.userEmail);
+    final userId = await _storage.read(StorageKeys.userId);
+    final email = await _storage.read(StorageKeys.userEmail);
     
     if (userId == null || email == null) {
       return null;
@@ -285,7 +252,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<bool> isAuthenticated() async {
     try {
-      final token = await _storage.read(key: StorageKeys.accessToken);
+      final token = await _storage.read(StorageKeys.accessToken);
       return token != null && token.isNotEmpty;
     } catch (e) {
       return false;

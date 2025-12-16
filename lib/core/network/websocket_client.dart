@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/app_config.dart';
 import '../utils/storage_keys.dart';
+import '../storage/storage_service.dart';
 
 class WebSocketClient {
   WebSocketChannel? _channel;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final StorageService _storage = StorageService.instance;
   StreamController<dynamic>? _messageController;
   Stream<dynamic>? _messageStream;
 
@@ -19,7 +19,7 @@ class WebSocketClient {
   }
 
   Future<void> connect(String chatId) async {
-    final token = await _storage.read(key: StorageKeys.accessToken);
+    final token = await _storage.read(StorageKeys.accessToken);
     if (token == null) {
       throw Exception('No access token available');
     }

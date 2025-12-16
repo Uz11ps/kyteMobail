@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../domain/repositories/chat_repository.dart';
 import '../models/chat_model.dart';
 import '../models/message_model.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/utils/storage_keys.dart';
+import '../../core/storage/storage_service.dart';
 
 class ChatRepositoryImpl implements ChatRepository {
   final Dio _dio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final StorageService _storage = StorageService.instance;
 
   ChatRepositoryImpl(this._dio);
 

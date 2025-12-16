@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../config/app_config.dart';
 import '../constants/api_endpoints.dart';
 import '../utils/storage_keys.dart';
+import '../storage/storage_service.dart';
 
 class ApiClient {
   late final Dio _dio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final StorageService _storage = StorageService.instance;
   Future<bool>? _refreshInFlight;
 
   ApiClient() {
@@ -29,7 +29,7 @@ class ApiClient {
                                 options.path.contains('/auth/register');
           
           if (!isAuthRequest) {
-            final token = await _storage.read(key: StorageKeys.accessToken);
+            final token = await _storage.read(StorageKeys.accessToken);
             if (token != null) {
               options.headers['Authorization'] = 'Bearer $token';
             }
@@ -70,7 +70,7 @@ class ApiClient {
               final refreshed = await (_refreshInFlight ??= _refreshToken());
               _refreshInFlight = null;
               if (refreshed) {
-                final token = await _storage.read(key: StorageKeys.accessToken);
+                final token = await _storage.read(StorageKeys.accessToken);
                 if (token != null && token.isNotEmpty) {
                   error.requestOptions.headers['Authorization'] = 'Bearer $token';
                   return handler.resolve(await _dio.fetch(error.requestOptions));
@@ -109,7 +109,7 @@ class ApiClient {
 
   Future<bool> _refreshToken() async {
     try {
-      final refreshToken = await _storage.read(key: StorageKeys.refreshToken);
+      final refreshToken = await _storage.read(StorageKeys.refreshToken);
       if (refreshToken == null) return false;
 
       final response = await _dio.post(
@@ -121,10 +121,7 @@ class ApiClient {
       if (response.statusCode == 200) {
         final accessToken = response.data?['accessToken'];
         if (accessToken != null && accessToken.toString().isNotEmpty) {
-          await _storage.write(
-            key: StorageKeys.accessToken,
-            value: accessToken.toString(),
-          );
+          await _storage.write(StorageKeys.accessToken, accessToken.toString());
           return true;
         }
       }

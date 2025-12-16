@@ -1,12 +1,12 @@
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../domain/repositories/google_repository.dart';
 import '../../core/constants/api_endpoints.dart';
 import '../../core/utils/storage_keys.dart';
+import '../../core/storage/storage_service.dart';
 
 class GoogleRepositoryImpl implements GoogleRepository {
   final Dio _dio;
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
+  final StorageService _storage = StorageService.instance;
 
   GoogleRepositoryImpl(this._dio);
 
@@ -17,10 +17,7 @@ class GoogleRepositoryImpl implements GoogleRepository {
         ApiEndpoints.submitGmailToken,
         data: {'token': token},
       );
-      await _storage.write(
-        key: StorageKeys.gmailOAuthToken,
-        value: token,
-      );
+      await _storage.write(StorageKeys.gmailOAuthToken, token);
     } on DioException catch (e) {
       throw Exception(e.response?.data['message'] ?? 'Ошибка отправки токена');
     }
@@ -28,7 +25,7 @@ class GoogleRepositoryImpl implements GoogleRepository {
 
   @override
   Future<String?> getGmailToken() async {
-    return await _storage.read(key: StorageKeys.gmailOAuthToken);
+    return await _storage.read(StorageKeys.gmailOAuthToken);
   }
 
   @override

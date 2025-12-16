@@ -9,7 +9,7 @@ import '../../../data/models/message_model.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/network/websocket_client.dart';
 import '../../../core/utils/storage_keys.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../core/storage/storage_service.dart';
 import 'dart:convert';
 
 class ChatScreen extends StatefulWidget {
@@ -45,8 +45,8 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadCurrentUserId() async {
-    final storage = const FlutterSecureStorage();
-    final userId = await storage.read(key: StorageKeys.userId);
+    final storage = StorageService.instance;
+    final userId = await storage.read(StorageKeys.userId);
     setState(() {
       _currentUserId = userId;
     });
