@@ -56,68 +56,14 @@ jobs:
           echo "📤 Копируем файлы на сервер..."
           scp -i ~/.ssh/deploy_key -r build/web/* ${SERVER_USER}@${SERVER_HOST}:/var/www/kyte-mobile/web/
           
-          # Настраиваем Nginx
+          # Загружаем конфигурацию Nginx на сервер
           echo "🔧 Настраиваем Nginx..."
+          scp -i ~/.ssh/deploy_key scripts/nginx-config.conf ${SERVER_USER}@${SERVER_HOST}:/tmp/nginx-config.conf
+          
+          # Настраиваем Nginx на сервере
           ssh -i ~/.ssh/deploy_key ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
             # Создаем резервную копию текущей конфигурации
             sudo cp /etc/nginx/sites-available/kyte-backend /etc/nginx/sites-available/kyte-backend.backup.$(date +%Y%m%d_%H%M%S) || true
-            
-            # Создаем конфигурацию Nginx через cat с here-document
-            cat > /tmp/nginx-config.conf << 'NGINX_EOF'
-server {
-    listen 80;
-    server_name _;
-
-    location /mobail {
-        alias /var/www/kyte-mobile/web;
-        try_files $uri $uri/ /mobail/index.html;
-        
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-            expires 1y;
-            add_header Cache-Control "public, immutable";
-        }
-    }
-
-    location /api {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /socket.io {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_cache_bypass $http_upgrade;
-        proxy_connect_timeout 7d;
-        proxy_send_timeout 7d;
-        proxy_read_timeout 7d;
-    }
-
-    location /uploads {
-        alias /var/www/kyte-backend/backend/uploads;
-    }
-
-    location /admin {
-        proxy_pass http://localhost:3000;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    }
-
-    location = / {
-        return 301 /mobail/;
-    }
-}
-NGINX_EOF
             
             # Копируем конфигурацию в нужное место
             sudo cp /tmp/nginx-config.conf /etc/nginx/sites-available/kyte-backend
