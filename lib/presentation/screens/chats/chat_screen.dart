@@ -188,9 +188,20 @@ class _ChatScreenState extends State<ChatScreen> {
               setState(() {
                 _messages = state.messages;
               });
+              // Прокручиваем вниз после загрузки сообщений
               WidgetsBinding.instance.addPostFrameCallback((_) {
-                _scrollToBottom();
+                if (_scrollController.hasClients) {
+                  _scrollController.jumpTo(_scrollController.position.maxScrollExtent);
+                }
               });
+            } else if (state is ChatError) {
+              // Показываем ошибку пользователю
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Ошибка: ${state.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
             }
           },
           child: Scaffold(
@@ -205,11 +216,15 @@ class _ChatScreenState extends State<ChatScreen> {
                     // ListView с сообщениями (занимает весь экран)
                     BlocBuilder<ChatBloc, ChatState>(
                       builder: (context, state) {
+                        // Показываем индикатор загрузки только при первой загрузке
                         if (state is MessagesLoading && _messages.isEmpty) {
                           return const Center(child: CircularProgressIndicator());
                         }
 
-                        if (_messages.isEmpty) {
+                        // Используем сообщения из state, если они есть, иначе из локального списка
+                        final messagesToShow = state is MessagesLoaded ? state.messages : _messages;
+
+                        if (messagesToShow.isEmpty) {
                           return Center(
                             child: Text(
                               'Нет сообщений',
@@ -223,9 +238,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         return ListView.builder(
                           controller: _scrollController,
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 100), // Отступ сверху для стеклянного контейнера
-                          itemCount: _messages.length,
+                          itemCount: messagesToShow.length,
                           itemBuilder: (context, index) {
-                            final message = _messages[index];
+                            final message = messagesToShow[index];
                             return _MessageItem(
                               message: message,
                               currentUserId: _currentUserId,

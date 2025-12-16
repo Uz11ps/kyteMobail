@@ -51,11 +51,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) async {
     try {
       final message = await chatRepository.sendMessage(event.chatId, event.content);
-      // В демо-режиме сразу добавляем сообщение в список
+      // Добавляем сообщение в список и перезагружаем историю для синхронизации
       final currentState = state;
       if (currentState is MessagesLoaded) {
+        // Временно добавляем сообщение для мгновенного отображения
         emit(MessagesLoaded(messages: [...currentState.messages, message]));
+        // Затем перезагружаем всю историю для синхронизации
+        final messages = await chatRepository.getMessages(event.chatId);
+        emit(MessagesLoaded(messages: messages));
       } else {
+        // Если состояние не MessagesLoaded, просто загружаем сообщения
         add(MessagesLoadRequested(chatId: event.chatId));
       }
     } catch (e) {
