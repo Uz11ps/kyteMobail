@@ -300,17 +300,38 @@ class AuthRepositoryImpl implements AuthRepository {
 
       UserModel user;
       try {
+        print('📋 Parsing user data: $userData');
         user = UserModel.fromJson(userData as Map<String, dynamic>);
+        print('✅ User parsed successfully: id=${user.id}, email=${user.email}');
       } catch (e) {
         print('❌ Error parsing user data: $e');
+        print('   Error type: ${e.runtimeType}');
         print('   User data: $userData');
-        throw Exception('Ошибка парсинга данных пользователя: ${e.toString()}');
+        print('   User data type: ${userData.runtimeType}');
+        rethrow;
       }
       
-      await _storage.write(StorageKeys.accessToken, jwtAccessToken.toString());
-      await _storage.write(StorageKeys.refreshToken, refreshToken.toString());
-      await _storage.write(StorageKeys.userId, user.id);
-      await _storage.write(StorageKeys.userEmail, user.email);
+      try {
+        print('💾 Saving access token...');
+        await _storage.write(StorageKeys.accessToken, jwtAccessToken.toString());
+        print('✅ Access token saved');
+        
+        print('💾 Saving refresh token...');
+        await _storage.write(StorageKeys.refreshToken, refreshToken.toString());
+        print('✅ Refresh token saved');
+        
+        print('💾 Saving user ID...');
+        await _storage.write(StorageKeys.userId, user.id);
+        print('✅ User ID saved: ${user.id}');
+        
+        print('💾 Saving user email...');
+        await _storage.write(StorageKeys.userEmail, user.email);
+        print('✅ User email saved: ${user.email}');
+      } catch (e) {
+        print('❌ Error saving user data: $e');
+        print('   Error type: ${e.runtimeType}');
+        rethrow;
+      }
 
       print('✅ Google user data saved: id=${user.id}, email=${user.email}');
       return user;

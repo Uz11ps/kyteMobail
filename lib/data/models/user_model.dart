@@ -25,20 +25,41 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    // Поддержка _id из MongoDB
-    if (json.containsKey('_id') && !json.containsKey('id')) {
-      json['id'] = json['_id'].toString();
+    try {
+      // Поддержка _id из MongoDB
+      if (json.containsKey('_id') && !json.containsKey('id')) {
+        final idValue = json['_id'];
+        if (idValue != null) {
+          json['id'] = idValue.toString();
+        }
+      }
+      
+      // Проверка обязательных полей
+      if (!json.containsKey('id') && !json.containsKey('_id')) {
+        throw Exception('Поле "id" отсутствует в ответе сервера. Данные: $json');
+      }
+      
+      final idValue = json['id'] ?? json['_id'];
+      if (idValue == null || idValue.toString().isEmpty) {
+        throw Exception('Поле "id" равно null или пустое в ответе сервера. Данные: $json');
+      }
+      
+      if (!json.containsKey('email')) {
+        throw Exception('Поле "email" отсутствует в ответе сервера. Данные: $json');
+      }
+      
+      final emailValue = json['email'];
+      if (emailValue == null || emailValue.toString().isEmpty) {
+        throw Exception('Поле "email" равно null или пустое в ответе сервера. Данные: $json');
+      }
+      
+      return _$UserModelFromJson(json);
+    } catch (e) {
+      if (e is Exception) {
+        rethrow;
+      }
+      throw Exception('Ошибка парсинга UserModel: ${e.toString()}. Данные: $json');
     }
-    
-    // Проверка обязательных полей
-    if (!json.containsKey('id') || json['id'] == null) {
-      throw Exception('Поле "id" отсутствует или равно null в ответе сервера');
-    }
-    if (!json.containsKey('email') || json['email'] == null) {
-      throw Exception('Поле "email" отсутствует или равно null в ответе сервера');
-    }
-    
-    return _$UserModelFromJson(json);
   }
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);

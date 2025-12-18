@@ -61,19 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
 
-      final GoogleSignInAuthentication auth = await account.authentication;
-      
-      // Проверяем наличие всех необходимых данных
-      if (auth.idToken == null || auth.accessToken == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Не удалось получить токены от Google'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-      
+      // Проверяем наличие email перед запросом authentication
       if (account.email == null || account.email!.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -83,11 +71,58 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         return;
       }
+
+      GoogleSignInAuthentication? auth;
+      try {
+        auth = await account.authentication;
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка получения данных от Google: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (auth == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось получить данные авторизации от Google'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      // Проверяем наличие всех необходимых данных
+      final idToken = auth.idToken;
+      final accessToken = auth.accessToken;
+      
+      if (idToken == null || idToken.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось получить ID токен от Google'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      if (accessToken == null || accessToken.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось получить токен доступа от Google'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
       
       context.read<AuthBloc>().add(
         AuthGoogleLoginRequested(
-          idToken: auth.idToken!,
-          accessToken: auth.accessToken!,
+          idToken: idToken,
+          accessToken: accessToken,
           email: account.email!,
           name: account.displayName ?? '',
           picture: account.photoUrl,
@@ -95,6 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } catch (e) {
+      print('❌ Google sign in error: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Ошибка входа через Google: ${e.toString()}'),
