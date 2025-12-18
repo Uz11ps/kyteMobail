@@ -77,7 +77,17 @@ class ChatRepositoryImpl implements ChatRepository {
       );
     } catch (e) {
       print('❌ Unexpected error loading chats: $e');
-      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
+        }
+      } catch (_) {
+        // Используем сообщение по умолчанию
+      }
       throw Exception('Ошибка загрузки чатов: $errorMessage');
     }
   }
@@ -126,7 +136,17 @@ class ChatRepositoryImpl implements ChatRepository {
       );
     } catch (e) {
       print('❌ Unexpected error loading messages: $e');
-      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
+        }
+      } catch (_) {
+        // Используем сообщение по умолчанию
+      }
       throw Exception('Ошибка загрузки сообщений: $errorMessage');
     }
   }
@@ -147,7 +167,17 @@ class ChatRepositoryImpl implements ChatRepository {
         _extractErrorMessage(e.response?.data, 'Ошибка отправки сообщения'),
       );
     } catch (e) {
-      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
+        }
+      } catch (_) {
+        // Используем сообщение по умолчанию
+      }
       throw Exception('Ошибка отправки сообщения: $errorMessage');
     }
   }
@@ -171,7 +201,17 @@ class ChatRepositoryImpl implements ChatRepository {
         _extractErrorMessage(e.response?.data, 'Ошибка создания группы'),
       );
     } catch (e) {
-      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
+        }
+      } catch (_) {
+        // Используем сообщение по умолчанию
+      }
       throw Exception('Ошибка создания группы: $errorMessage');
     }
   }
@@ -192,7 +232,17 @@ class ChatRepositoryImpl implements ChatRepository {
         _extractErrorMessage(e.response?.data, 'Ошибка присоединения к группе'),
       );
     } catch (e) {
-      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
+        }
+      } catch (_) {
+        // Используем сообщение по умолчанию
+      }
       throw Exception('Ошибка присоединения к группе: $errorMessage');
     }
   }

@@ -102,21 +102,26 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         auth = await account.authentication;
       } catch (e) {
-        String errorMessage = 'Неизвестная ошибка';
+        String errorMessage = 'Ошибка получения данных от Google';
         try {
           if (e != null) {
-            errorMessage = e.toString();
+            final errorStr = e.toString();
+            if (errorStr.isNotEmpty) {
+              errorMessage = errorStr;
+            }
           }
         } catch (_) {
-          errorMessage = 'Ошибка получения данных от Google';
+          // Используем сообщение по умолчанию
         }
         debugPrint('❌ Ошибка получения authentication: $errorMessage');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка получения данных от Google: $errorMessage'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
         return;
       }
 
@@ -165,26 +170,33 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } catch (e, stackTrace) {
-      String errorMessage = 'Неизвестная ошибка';
+      String errorMessage = 'Ошибка входа через Google';
       try {
         if (e != null) {
-          errorMessage = e.toString();
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
         }
       } catch (_) {
-        errorMessage = 'Ошибка входа через Google';
+        // Используем сообщение по умолчанию
       }
       debugPrint('❌ Google sign in error: $errorMessage');
       try {
-        debugPrint('   Stack trace: $stackTrace');
+        if (stackTrace != null) {
+          debugPrint('   Stack trace: $stackTrace');
+        }
       } catch (_) {
         // Игнорируем ошибки при логировании stack trace
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка входа через Google: $errorMessage'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 

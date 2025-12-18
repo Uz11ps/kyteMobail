@@ -89,7 +89,17 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception(errorMessage);
     } catch (e) {
       print('❌ Unexpected login error: $e');
-      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
+        }
+      } catch (_) {
+        // Используем сообщение по умолчанию
+      }
       throw Exception('Ошибка подключения: $errorMessage');
     }
   }
@@ -167,7 +177,17 @@ class AuthRepositoryImpl implements AuthRepository {
       } catch (e) {
         print('❌ Error parsing user: $e');
         print('   User data: $userData');
-        final parseErrorMessage = e?.toString() ?? 'Неизвестная ошибка парсинга';
+        String parseErrorMessage = 'Неизвестная ошибка парсинга';
+        try {
+          if (e != null) {
+            final errorStr = e.toString();
+            if (errorStr.isNotEmpty) {
+              parseErrorMessage = errorStr;
+            }
+          }
+        } catch (_) {
+          // Используем сообщение по умолчанию
+        }
         throw Exception('Ошибка парсинга данных пользователя: $parseErrorMessage');
       }
       
@@ -227,7 +247,17 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception(errorMessage);
     } catch (e) {
       print('❌ Unexpected registration error: $e');
-      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
+        }
+      } catch (_) {
+        // Используем сообщение по умолчанию
+      }
       throw Exception('Ошибка подключения: $errorMessage');
     }
   }
@@ -359,7 +389,17 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception(errorMessage);
     } catch (e) {
       print('❌ Unexpected Google login error: $e');
-      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          final errorStr = e.toString();
+          if (errorStr.isNotEmpty) {
+            errorMessage = errorStr;
+          }
+        }
+      } catch (_) {
+        // Используем сообщение по умолчанию
+      }
       throw Exception('Ошибка подключения: $errorMessage');
     }
   }
