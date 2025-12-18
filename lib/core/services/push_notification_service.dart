@@ -8,7 +8,7 @@ class PushNotificationService {
   factory PushNotificationService() => _instance;
   PushNotificationService._internal();
 
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  FirebaseMessaging? _firebaseMessaging;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   String? _fcmToken;
@@ -16,10 +16,19 @@ class PushNotificationService {
   String? get fcmToken => _fcmToken;
 
   Future<void> initialize() async {
+    // Пропускаем инициализацию на веб-платформе
+    if (kIsWeb) {
+      debugPrint('ℹ️  Push-уведомления недоступны на веб-платформе');
+      return;
+    }
+    
     try {
+      // Инициализация FirebaseMessaging только для мобильных платформ
+      _firebaseMessaging = FirebaseMessaging.instance;
+      
       // Проверка доступности Firebase
       // Запрос разрешений на уведомления
-      NotificationSettings settings = await _firebaseMessaging.requestPermission(
+      NotificationSettings settings = await _firebaseMessaging!.requestPermission(
         alert: true,
         badge: true,
         sound: true,
@@ -31,10 +40,10 @@ class PushNotificationService {
         await _initializeLocalNotifications();
 
         // Получение FCM токена
-        _fcmToken = await _firebaseMessaging.getToken();
+        _fcmToken = await _firebaseMessaging!.getToken();
         
         // Обработка токена обновления
-        _firebaseMessaging.onTokenRefresh.listen((newToken) {
+        _firebaseMessaging!.onTokenRefresh.listen((newToken) {
           _fcmToken = newToken;
           // Отправить новый токен на сервер
         });
@@ -46,7 +55,7 @@ class PushNotificationService {
         FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
 
         // Проверка, было ли приложение открыто из уведомления
-        final initialMessage = await _firebaseMessaging.getInitialMessage();
+        final initialMessage = await _firebaseMessaging!.getInitialMessage();
         if (initialMessage != null) {
           _handleNotificationTap(initialMessage);
         }
@@ -146,11 +155,15 @@ class PushNotificationService {
   }
 
   Future<void> subscribeToTopic(String topic) async {
-    await _firebaseMessaging.subscribeToTopic(topic);
+    if (_firebaseMessaging != null) {
+      await _firebaseMessaging!.subscribeToTopic(topic);
+    }
   }
 
   Future<void> unsubscribeFromTopic(String topic) async {
-    await _firebaseMessaging.unsubscribeFromTopic(topic);
+    if (_firebaseMessaging != null) {
+      await _firebaseMessaging!.unsubscribeFromTopic(topic);
+    }
   }
 }
 

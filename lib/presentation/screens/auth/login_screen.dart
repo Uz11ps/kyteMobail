@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/config/app_config.dart';
@@ -20,9 +21,14 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPhoneMode = false;
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
+  GoogleSignIn? _googleSignIn;
+  
+  GoogleSignIn get googleSignIn {
+    _googleSignIn ??= GoogleSignIn(
+      scopes: ['email', 'profile'],
+    );
+    return _googleSignIn!;
+  }
 
   @override
   void dispose() {
@@ -55,7 +61,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleSignIn() async {
     try {
-      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      final GoogleSignInAccount? account = await googleSignIn.signIn();
       if (account == null) {
         // Пользователь отменил вход
         return;
