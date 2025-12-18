@@ -63,25 +63,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final GoogleSignInAuthentication auth = await account.authentication;
       
-      if (auth.idToken != null && auth.accessToken != null) {
-        context.read<AuthBloc>().add(
-          AuthGoogleLoginRequested(
-            idToken: auth.idToken!,
-            accessToken: auth.accessToken!,
-            email: account.email,
-            name: account.displayName ?? '',
-            picture: account.photoUrl,
-            googleId: account.id,
-          ),
-        );
-      } else {
+      // Проверяем наличие всех необходимых данных
+      if (auth.idToken == null || auth.accessToken == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Не удалось получить токены от Google'),
             backgroundColor: Colors.red,
           ),
         );
+        return;
       }
+      
+      if (account.email == null || account.email!.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось получить email от Google'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      context.read<AuthBloc>().add(
+        AuthGoogleLoginRequested(
+          idToken: auth.idToken!,
+          accessToken: auth.accessToken!,
+          email: account.email!,
+          name: account.displayName ?? '',
+          picture: account.photoUrl,
+          googleId: account.id,
+        ),
+      );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -286,7 +286,26 @@ class AuthRepositoryImpl implements AuthRepository {
         throw Exception('Токен обновления не получен');
       }
 
-      final user = UserModel.fromJson(userData);
+      // Проверяем наличие обязательных полей перед парсингом
+      if (userData is! Map<String, dynamic>) {
+        throw Exception('Данные пользователя имеют неверный формат');
+      }
+      
+      if (!userData.containsKey('id') && !userData.containsKey('_id')) {
+        throw Exception('ID пользователя отсутствует в ответе сервера');
+      }
+      if (!userData.containsKey('email') || userData['email'] == null) {
+        throw Exception('Email пользователя отсутствует в ответе сервера');
+      }
+
+      UserModel user;
+      try {
+        user = UserModel.fromJson(userData as Map<String, dynamic>);
+      } catch (e) {
+        print('❌ Error parsing user data: $e');
+        print('   User data: $userData');
+        throw Exception('Ошибка парсинга данных пользователя: ${e.toString()}');
+      }
       
       await _storage.write(StorageKeys.accessToken, jwtAccessToken.toString());
       await _storage.write(StorageKeys.refreshToken, refreshToken.toString());

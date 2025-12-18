@@ -29,6 +29,15 @@ class UserModel {
     if (json.containsKey('_id') && !json.containsKey('id')) {
       json['id'] = json['_id'].toString();
     }
+    
+    // Проверка обязательных полей
+    if (!json.containsKey('id') || json['id'] == null) {
+      throw Exception('Поле "id" отсутствует или равно null в ответе сервера');
+    }
+    if (!json.containsKey('email') || json['email'] == null) {
+      throw Exception('Поле "email" отсутствует или равно null в ответе сервера');
+    }
+    
     return _$UserModelFromJson(json);
   }
 
