@@ -120,7 +120,13 @@ class _LoginScreenState extends State<LoginScreen> {
           debugPrint('❌ Ошибка при проверке ошибки: $parseError');
         }
         debugPrint('❌ Ошибка получения authentication: $errorMessage');
-        debugPrint('   Тип ошибки: ${e.runtimeType}');
+        try {
+          if (e != null) {
+            debugPrint('   Тип ошибки: ${e.runtimeType}');
+          }
+        } catch (_) {
+          // Игнорируем ошибки при получении типа
+        }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -195,7 +201,13 @@ class _LoginScreenState extends State<LoginScreen> {
         debugPrint('❌ Ошибка при проверке ошибки: $parseError');
       }
       debugPrint('❌ Google sign in error: $errorMessage');
-      debugPrint('   Тип ошибки: ${e.runtimeType}');
+      try {
+        if (e != null) {
+          debugPrint('   Тип ошибки: ${e.runtimeType}');
+        }
+      } catch (_) {
+        // Игнорируем ошибки при получении типа
+      }
       try {
         if (stackTrace != null) {
           try {

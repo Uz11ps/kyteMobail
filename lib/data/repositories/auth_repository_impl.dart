@@ -211,7 +211,13 @@ class AuthRepositoryImpl implements AuthRepository {
         print('✅ All user data saved successfully');
       } catch (e) {
         print('❌ Error saving user data: $e');
-        print('   Error type: ${e.runtimeType}');
+        try {
+          if (e != null) {
+            print('   Error type: ${e.runtimeType}');
+          }
+        } catch (_) {
+          // Игнорируем ошибки при получении типа
+        }
         rethrow;
       }
       
@@ -338,9 +344,21 @@ class AuthRepositoryImpl implements AuthRepository {
         print('✅ User parsed successfully: id=${user.id}, email=${user.email}');
       } catch (e) {
         print('❌ Error parsing user data: $e');
-        print('   Error type: ${e.runtimeType}');
+        try {
+          if (e != null) {
+            print('   Error type: ${e.runtimeType}');
+          }
+        } catch (_) {
+          // Игнорируем ошибки при получении типа
+        }
         print('   User data: $userData');
-        print('   User data type: ${userData.runtimeType}');
+        try {
+          if (userData != null) {
+            print('   User data type: ${userData.runtimeType}');
+          }
+        } catch (_) {
+          // Игнорируем ошибки при получении типа
+        }
         rethrow;
       }
       
@@ -362,7 +380,13 @@ class AuthRepositoryImpl implements AuthRepository {
         print('✅ User email saved: ${user.email}');
       } catch (e) {
         print('❌ Error saving user data: $e');
-        print('   Error type: ${e.runtimeType}');
+        try {
+          if (e != null) {
+            print('   Error type: ${e.runtimeType}');
+          }
+        } catch (_) {
+          // Игнорируем ошибки при получении типа
+        }
         rethrow;
       }
 
