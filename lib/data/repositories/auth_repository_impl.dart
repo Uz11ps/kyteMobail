@@ -89,7 +89,8 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception(errorMessage);
     } catch (e) {
       print('❌ Unexpected login error: $e');
-      throw Exception('Ошибка подключения: ${e.toString()}');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      throw Exception('Ошибка подключения: $errorMessage');
     }
   }
 
@@ -166,7 +167,8 @@ class AuthRepositoryImpl implements AuthRepository {
       } catch (e) {
         print('❌ Error parsing user: $e');
         print('   User data: $userData');
-        throw Exception('Ошибка парсинга данных пользователя: ${e.toString()}');
+        final parseErrorMessage = e?.toString() ?? 'Неизвестная ошибка парсинга';
+        throw Exception('Ошибка парсинга данных пользователя: $parseErrorMessage');
       }
       
       try {
@@ -225,7 +227,8 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception(errorMessage);
     } catch (e) {
       print('❌ Unexpected registration error: $e');
-      throw Exception('Ошибка подключения: ${e.toString()}');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      throw Exception('Ошибка подключения: $errorMessage');
     }
   }
 
@@ -356,7 +359,8 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception(errorMessage);
     } catch (e) {
       print('❌ Unexpected Google login error: $e');
-      throw Exception('Ошибка подключения: ${e.toString()}');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      throw Exception('Ошибка подключения: $errorMessage');
     }
   }
 

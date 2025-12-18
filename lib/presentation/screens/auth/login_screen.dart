@@ -102,10 +102,11 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         auth = await account.authentication;
       } catch (e) {
-        debugPrint('❌ Ошибка получения authentication: $e');
+        final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+        debugPrint('❌ Ошибка получения authentication: $errorMessage');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Ошибка получения данных от Google: ${e.toString()}'),
+            content: Text('Ошибка получения данных от Google: $errorMessage'),
             backgroundColor: Colors.red,
           ),
         );
@@ -157,11 +158,12 @@ class _LoginScreenState extends State<LoginScreen> {
         ),
       );
     } catch (e, stackTrace) {
-      debugPrint('❌ Google sign in error: $e');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      debugPrint('❌ Google sign in error: $errorMessage');
       debugPrint('   Stack trace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка входа через Google: ${e.toString()}'),
+          content: Text('Ошибка входа через Google: $errorMessage'),
           backgroundColor: Colors.red,
         ),
       );

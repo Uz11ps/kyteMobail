@@ -77,7 +77,8 @@ class ChatRepositoryImpl implements ChatRepository {
       );
     } catch (e) {
       print('❌ Unexpected error loading chats: $e');
-      throw Exception('Ошибка загрузки чатов: ${e.toString()}');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      throw Exception('Ошибка загрузки чатов: $errorMessage');
     }
   }
 
@@ -125,7 +126,8 @@ class ChatRepositoryImpl implements ChatRepository {
       );
     } catch (e) {
       print('❌ Unexpected error loading messages: $e');
-      throw Exception('Ошибка загрузки сообщений: ${e.toString()}');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      throw Exception('Ошибка загрузки сообщений: $errorMessage');
     }
   }
 
@@ -145,7 +147,8 @@ class ChatRepositoryImpl implements ChatRepository {
         _extractErrorMessage(e.response?.data, 'Ошибка отправки сообщения'),
       );
     } catch (e) {
-      throw Exception('Ошибка отправки сообщения: ${e.toString()}');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      throw Exception('Ошибка отправки сообщения: $errorMessage');
     }
   }
 
@@ -168,7 +171,8 @@ class ChatRepositoryImpl implements ChatRepository {
         _extractErrorMessage(e.response?.data, 'Ошибка создания группы'),
       );
     } catch (e) {
-      throw Exception('Ошибка создания группы: ${e.toString()}');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      throw Exception('Ошибка создания группы: $errorMessage');
     }
   }
 
@@ -188,7 +192,8 @@ class ChatRepositoryImpl implements ChatRepository {
         _extractErrorMessage(e.response?.data, 'Ошибка присоединения к группе'),
       );
     } catch (e) {
-      throw Exception('Ошибка присоединения к группе: ${e.toString()}');
+      final errorMessage = e?.toString() ?? 'Неизвестная ошибка';
+      throw Exception('Ошибка присоединения к группе: $errorMessage');
     }
   }
 }
