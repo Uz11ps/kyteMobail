@@ -40,7 +40,15 @@ class GoogleBloc extends Bloc<GoogleEvent, GoogleState> {
         emit(const GoogleError(message: 'Не удалось получить токен'));
       }
     } catch (e) {
-      emit(GoogleError(message: e.toString()));
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          errorMessage = e.toString();
+        }
+      } catch (_) {
+        errorMessage = 'Ошибка Google Sign In';
+      }
+      emit(GoogleError(message: errorMessage));
     }
   }
 
@@ -53,7 +61,15 @@ class GoogleBloc extends Bloc<GoogleEvent, GoogleState> {
       await googleRepository.submitGmailToken(event.token);
       emit(GoogleTokenSubmittedSuccess());
     } catch (e) {
-      emit(GoogleError(message: e.toString()));
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          errorMessage = e.toString();
+        }
+      } catch (_) {
+        errorMessage = 'Ошибка отправки токена';
+      }
+      emit(GoogleError(message: errorMessage));
     }
   }
 
@@ -66,7 +82,15 @@ class GoogleBloc extends Bloc<GoogleEvent, GoogleState> {
       final meetUrl = await googleRepository.createGoogleMeet();
       emit(GoogleMeetCreated(meetUrl: meetUrl));
     } catch (e) {
-      emit(GoogleError(message: e.toString()));
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          errorMessage = e.toString();
+        }
+      } catch (_) {
+        errorMessage = 'Ошибка создания Google Meet';
+      }
+      emit(GoogleError(message: errorMessage));
     }
   }
 }
