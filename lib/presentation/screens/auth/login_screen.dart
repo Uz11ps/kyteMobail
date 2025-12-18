@@ -172,14 +172,19 @@ class _LoginScreenState extends State<LoginScreen> {
         return;
       }
       
+      // Безопасно получаем дополнительные данные из account
+      final displayName = account.displayName;
+      final photoUrl = account.photoUrl;
+      final googleId = account.id;
+      
       context.read<AuthBloc>().add(
         AuthGoogleLoginRequested(
           idToken: idToken,
           accessToken: accessToken,
           email: accountEmail,
-          name: account.displayName ?? '',
-          picture: account.photoUrl,
-          googleId: account.id,
+          name: displayName ?? '',
+          picture: photoUrl,
+          googleId: googleId,
         ),
       );
     } catch (e, stackTrace) {

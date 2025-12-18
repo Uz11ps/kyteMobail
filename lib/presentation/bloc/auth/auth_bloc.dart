@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import '../../../data/models/user_model.dart';
 
@@ -95,9 +96,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(AuthAuthenticated(user: user));
     } catch (e) {
-      String errorMessage = e.toString();
-      if (errorMessage.startsWith('Exception: ')) {
-        errorMessage = errorMessage.substring(11);
+      String errorMessage = 'Ошибка входа через Google';
+      try {
+        if (e != null) {
+          try {
+            final errorStr = e.toString();
+            if (errorStr.isNotEmpty && errorStr != 'null') {
+              errorMessage = errorStr;
+              if (errorMessage.startsWith('Exception: ')) {
+                errorMessage = errorMessage.substring(11);
+              }
+            }
+          } catch (toStringError) {
+            // Если toString() сам выбрасывает ошибку, используем сообщение по умолчанию
+            debugPrint('❌ Ошибка при вызове toString() в AuthBloc: $toStringError');
+          }
+        }
+      } catch (parseError) {
+        // Если проверка e != null выбрасывает ошибку, используем сообщение по умолчанию
+        debugPrint('❌ Ошибка при проверке ошибки в AuthBloc: $parseError');
       }
       emit(AuthError(message: errorMessage));
     }
@@ -112,7 +129,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await authRepository.logout();
       emit(AuthUnauthenticated());
     } catch (e) {
-      emit(AuthError(message: e.toString()));
+      String errorMessage = 'Ошибка выхода';
+      try {
+        if (e != null) {
+          try {
+            final errorStr = e.toString();
+            if (errorStr.isNotEmpty && errorStr != 'null') {
+              errorMessage = errorStr;
+            }
+          } catch (toStringError) {
+            // Если toString() сам выбрасывает ошибку, используем сообщение по умолчанию
+            debugPrint('❌ Ошибка при вызове toString() в logout: $toStringError');
+          }
+        }
+      } catch (parseError) {
+        // Если проверка e != null выбрасывает ошибку, используем сообщение по умолчанию
+        debugPrint('❌ Ошибка при проверке ошибки в logout: $parseError');
+      }
+      emit(AuthError(message: errorMessage));
     }
   }
 }
