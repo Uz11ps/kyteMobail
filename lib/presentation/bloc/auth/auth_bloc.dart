@@ -13,6 +13,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthLoginRequested>(_onAuthLoginRequested);
     on<AuthRegisterRequested>(_onAuthRegisterRequested);
+    on<AuthGoogleLoginRequested>(_onAuthGoogleLoginRequested);
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
   }
 
@@ -70,6 +71,30 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthAuthenticated(user: user));
     } catch (e) {
       // Убираем префикс "Exception: " если он есть
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      emit(AuthError(message: errorMessage));
+    }
+  }
+
+  Future<void> _onAuthGoogleLoginRequested(
+    AuthGoogleLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final user = await authRepository.loginWithGoogle(
+        event.idToken,
+        event.accessToken,
+        event.email,
+        event.name,
+        picture: event.picture,
+        googleId: event.googleId,
+      );
+      emit(AuthAuthenticated(user: user));
+    } catch (e) {
       String errorMessage = e.toString();
       if (errorMessage.startsWith('Exception: ')) {
         errorMessage = errorMessage.substring(11);

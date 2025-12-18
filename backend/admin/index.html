@@ -52,6 +52,9 @@
                     <a href="#" class="nav-item" data-page="messages">
                         <span>📨</span> Сообщения
                     </a>
+                    <a href="#" class="nav-item" data-page="ai">
+                        <span>🤖</span> Настройки AI
+                    </a>
                 </nav>
             </aside>
 
@@ -140,6 +143,61 @@
                     </div>
                     <div id="messagesTable" class="table-container"></div>
                     <div class="pagination" id="messagesPagination"></div>
+                </div>
+
+                <!-- Настройки AI -->
+                <div id="aiPage" class="page">
+                    <div class="page-header">
+                        <h2>Настройки AI</h2>
+                        <button class="btn btn-primary" onclick="testAIConfig()">Тестировать</button>
+                    </div>
+                    <div id="aiConfigForm" class="form-container">
+                        <form id="aiConfigFormElement">
+                            <div class="form-group">
+                                <label>OpenAI API Key</label>
+                                <input type="password" id="openaiApiKey" placeholder="sk-...">
+                                <small>Оставьте пустым, чтобы не изменять текущий ключ</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Модель</label>
+                                <select id="openaiModel">
+                                    <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                                    <option value="gpt-4">gpt-4</option>
+                                    <option value="gpt-4-turbo">gpt-4-turbo</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Max Tokens</label>
+                                    <input type="number" id="openaiMaxTokens" min="1" max="4000" value="500">
+                                </div>
+                                <div class="form-group">
+                                    <label>Temperature</label>
+                                    <input type="number" id="openaiTemperature" min="0" max="2" step="0.1" value="0.7">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Системный промпт</label>
+                                <textarea id="systemPrompt" rows="5" placeholder="Ты полезный AI-ассистент..."></textarea>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Макс. запросов в минуту</label>
+                                    <input type="number" id="maxRequestsPerMinute" min="1" value="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Макс. запросов в час</label>
+                                    <input type="number" id="maxRequestsPerHour" min="1" value="100">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" id="aiEnabled"> AI включен
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+                        </form>
+                    </div>
                 </div>
             </main>
         </div>

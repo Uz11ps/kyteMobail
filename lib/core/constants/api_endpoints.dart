@@ -16,6 +16,7 @@ class ApiEndpoints {
   
   // Google OAuth
   static const String submitGmailToken = '/auth/gmail/token';
+  static const String googleAuth = '/auth/google';
   
   // AI
   static const String askAI = '/ai/ask';
@@ -30,6 +31,10 @@ class ApiEndpoints {
   static const String getCurrentUser = '/user/me';
   static const String updateProfile = '/user/profile';
   static const String uploadAvatar = '/user/avatar';
+  
+  // Files
+  static String uploadFile(String chatId) => '/chats/$chatId/files';
+  static String getChatFiles(String chatId) => '/chats/$chatId/files';
   
   static String messagesForChat(String chatId) => messages.replaceAll('{chatId}', chatId);
   static String sendMessageToChat(String chatId) => sendMessage.replaceAll('{chatId}', chatId);

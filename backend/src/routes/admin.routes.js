@@ -4,6 +4,7 @@ import { getUsers, getUserById, deleteUser, updateUser } from '../controllers/ad
 import { getChats, getChatById, deleteChat } from '../controllers/admin/chats.controller.js';
 import { getMessages, getMessageById, deleteMessage } from '../controllers/admin/messages.controller.js';
 import { getStats } from '../controllers/admin/stats.controller.js';
+import { getAIConfig, updateAIConfig, testAIConfig } from '../controllers/admin/ai.controller.js';
 import { adminAuth } from '../middleware/adminAuth.js';
 
 const router = express.Router();
@@ -33,6 +34,11 @@ router.delete('/chats/:id', deleteChat);
 router.get('/messages', getMessages);
 router.get('/messages/:id', getMessageById);
 router.delete('/messages/:id', deleteMessage);
+
+// Настройки AI
+router.get('/ai/config', getAIConfig);
+router.put('/ai/config', updateAIConfig);
+router.post('/ai/config/test', testAIConfig);
 
 export default router;
 

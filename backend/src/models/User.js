@@ -42,6 +42,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     encrypted: true,
   },
+  googleId: {
+    type: String,
+    sparse: true,
+    unique: true,
+  },
   fcmToken: {
     type: String,
   },

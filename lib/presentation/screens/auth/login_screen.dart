@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/config/app_config.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +20,9 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isPhoneMode = false;
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    scopes: ['email', 'profile'],
+  );
 
   @override
   void dispose() {
@@ -45,6 +50,45 @@ class _LoginScreenState extends State<LoginScreen> {
               password: _passwordController.text,
             ),
           );
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      final GoogleSignInAccount? account = await _googleSignIn.signIn();
+      if (account == null) {
+        // Пользователь отменил вход
+        return;
+      }
+
+      final GoogleSignInAuthentication auth = await account.authentication;
+      
+      if (auth.idToken != null && auth.accessToken != null) {
+        context.read<AuthBloc>().add(
+          AuthGoogleLoginRequested(
+            idToken: auth.idToken!,
+            accessToken: auth.accessToken!,
+            email: account.email,
+            name: account.displayName ?? '',
+            picture: account.photoUrl,
+            googleId: account.id,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Не удалось получить токены от Google'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Ошибка входа через Google: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -212,6 +256,46 @@ class _LoginScreenState extends State<LoginScreen> {
                             : const Text('Войти'),
                       );
                     },
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Divider(
+                          thickness: 1,
+                          color: Colors.grey[300],
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'или',
+                          style: TextStyle(color: Colors.grey[600]),
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          thickness: 1,
+                          color: Colors.grey[300],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _handleGoogleSignIn,
+                    icon: Image.network(
+                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                      height: 24,
+                      width: 24,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.g_mobiledata, size: 24);
+                      },
+                    ),
+                    label: const Text('Войти через Google'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   TextButton(

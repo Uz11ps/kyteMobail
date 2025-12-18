@@ -250,6 +250,77 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<UserModel> loginWithGoogle(String idToken, String accessToken, String email, String name, {String? picture, String? googleId}) async {
+    try {
+      print('🔐 Attempting Google login for: $email');
+      
+      final response = await _dio.post(
+        ApiEndpoints.googleAuth,
+        data: {
+          'idToken': idToken,
+          'accessToken': accessToken,
+          'email': email,
+          'name': name,
+          if (picture != null) 'picture': picture,
+          if (googleId != null) 'googleId': googleId,
+        },
+      );
+
+      print('✅ Google login successful, response: ${response.data}');
+
+      if (response.data == null) {
+        throw Exception('Пустой ответ от сервера');
+      }
+
+      final userData = response.data['user'];
+      final jwtAccessToken = response.data['accessToken'];
+      final refreshToken = response.data['refreshToken'];
+
+      if (userData == null) {
+        throw Exception('Данные пользователя не получены');
+      }
+      if (jwtAccessToken == null || jwtAccessToken.toString().isEmpty) {
+        throw Exception('Токен доступа не получен');
+      }
+      if (refreshToken == null || refreshToken.toString().isEmpty) {
+        throw Exception('Токен обновления не получен');
+      }
+
+      final user = UserModel.fromJson(userData);
+      
+      await _storage.write(StorageKeys.accessToken, jwtAccessToken.toString());
+      await _storage.write(StorageKeys.refreshToken, refreshToken.toString());
+      await _storage.write(StorageKeys.userId, user.id);
+      await _storage.write(StorageKeys.userEmail, user.email);
+
+      print('✅ Google user data saved: id=${user.id}, email=${user.email}');
+      return user;
+    } on DioException catch (e) {
+      print('❌ Google login error: ${e.type}');
+      print('   Status: ${e.response?.statusCode}');
+      print('   Data: ${e.response?.data}');
+      print('   Message: ${e.message}');
+      
+      String errorMessage = 'Ошибка входа через Google';
+      
+      if (e.response != null) {
+        if (e.response!.data is Map) {
+          errorMessage = e.response!.data['message'] ?? 
+                        e.response!.data['error'] ?? 
+                        'Ошибка входа через Google';
+        } else if (e.response!.data is String) {
+          errorMessage = e.response!.data;
+        }
+      }
+      
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('❌ Unexpected Google login error: $e');
+      throw Exception('Ошибка подключения: ${e.toString()}');
+    }
+  }
+
+  @override
   Future<bool> isAuthenticated() async {
     try {
       final token = await _storage.read(StorageKeys.accessToken);

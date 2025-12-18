@@ -53,9 +53,18 @@ function setupEventListeners() {
     }, 500));
 
     // Модальное окно
-    document.querySelector('.close').addEventListener('click', () => {
-        document.getElementById('modal').classList.remove('active');
-    });
+    const closeBtn = document.querySelector('.close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            document.getElementById('modal').classList.remove('active');
+        });
+    }
+    
+    // Форма настроек AI
+    const aiConfigForm = document.getElementById('aiConfigFormElement');
+    if (aiConfigForm) {
+        aiConfigForm.addEventListener('submit', saveAIConfig);
+    }
 }
 
 // Логин
@@ -136,6 +145,9 @@ function switchPage(page) {
             break;
         case 'messages':
             loadMessages();
+            break;
+        case 'ai':
+            loadAIConfig();
             break;
     }
 }
@@ -279,6 +291,7 @@ function renderUsersTable(users, pagination) {
                 <td>${user.phone || '-'}</td>
                 <td>${new Date(user.createdAt).toLocaleDateString('ru-RU')}</td>
                 <td>
+                    <button class="btn btn-sm btn-info" onclick="showUserDetails('${user._id}')">Подробнее</button>
                     <button class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}')">Удалить</button>
                 </td>
             </tr>
@@ -482,9 +495,150 @@ function debounce(func, wait) {
     };
 }
 
+// Настройки AI
+async function loadAIConfig() {
+    try {
+        const data = await apiRequest('/ai/config');
+        if (data.success) {
+            const config = data.data;
+            document.getElementById('openaiApiKey').value = '';
+            document.getElementById('openaiModel').value = config.openaiModel || 'gpt-3.5-turbo';
+            document.getElementById('openaiMaxTokens').value = config.openaiMaxTokens || 500;
+            document.getElementById('openaiTemperature').value = config.openaiTemperature || 0.7;
+            document.getElementById('systemPrompt').value = config.systemPrompt || '';
+            document.getElementById('maxRequestsPerMinute').value = config.maxRequestsPerMinute || 10;
+            document.getElementById('maxRequestsPerHour').value = config.maxRequestsPerHour || 100;
+            document.getElementById('aiEnabled').checked = config.enabled !== false;
+        }
+    } catch (error) {
+        console.error('Ошибка загрузки настроек AI:', error);
+        alert('Ошибка загрузки настроек AI: ' + error.message);
+    }
+}
+
+async function saveAIConfig(e) {
+    e.preventDefault();
+    try {
+        const config = {
+            openaiApiKey: document.getElementById('openaiApiKey').value || undefined,
+            openaiModel: document.getElementById('openaiModel').value,
+            openaiMaxTokens: parseInt(document.getElementById('openaiMaxTokens').value),
+            openaiTemperature: parseFloat(document.getElementById('openaiTemperature').value),
+            systemPrompt: document.getElementById('systemPrompt').value,
+            maxRequestsPerMinute: parseInt(document.getElementById('maxRequestsPerMinute').value),
+            maxRequestsPerHour: parseInt(document.getElementById('maxRequestsPerHour').value),
+            enabled: document.getElementById('aiEnabled').checked,
+        };
+        
+        const data = await apiRequest('/ai/config', {
+            method: 'PUT',
+            body: JSON.stringify(config),
+        });
+        
+        if (data.success) {
+            alert('Настройки AI сохранены');
+            loadAIConfig();
+        }
+    } catch (error) {
+        alert('Ошибка сохранения настроек AI: ' + error.message);
+    }
+}
+
+async function testAIConfig() {
+    try {
+        const data = await apiRequest('/ai/config/test', { method: 'POST' });
+        if (data.success) {
+            alert('Настройки AI валидны! Модель: ' + data.data.model);
+        }
+    } catch (error) {
+        alert('Ошибка тестирования AI: ' + (error.error || error.message));
+    }
+}
+
+// Улучшенное отображение информации о пользователе
+async function showUserDetails(userId) {
+    try {
+        const data = await apiRequest(`/users/${userId}`);
+        if (data.success) {
+            const user = data.data;
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <h3>Информация о пользователе</h3>
+                <div class="user-details">
+                    <p><strong>Email:</strong> ${user.email || '-'}</p>
+                    <p><strong>Имя:</strong> ${user.name || '-'}</p>
+                    <p><strong>Никнейм:</strong> ${user.nickname || '-'}</p>
+                    <p><strong>Телефон:</strong> ${user.phone || '-'}</p>
+                    <p><strong>О себе:</strong> ${user.about || '-'}</p>
+                    <p><strong>День рождения:</strong> ${user.birthday ? new Date(user.birthday).toLocaleDateString('ru-RU') : '-'}</p>
+                    <p><strong>Дата регистрации:</strong> ${new Date(user.createdAt).toLocaleString('ru-RU')}</p>
+                    <p><strong>Последнее обновление:</strong> ${new Date(user.updatedAt).toLocaleString('ru-RU')}</p>
+                    ${user.avatarUrl ? `<p><strong>Аватар:</strong> <img src="${user.avatarUrl}" style="max-width: 100px; border-radius: 50%;" /></p>` : ''}
+                </div>
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+    } catch (error) {
+        alert('Ошибка загрузки информации о пользователе: ' + error.message);
+    }
+}
+
+// Обновляем рендеринг таблицы пользователей для добавления кнопки "Подробнее"
+function renderUsersTable(users, pagination) {
+    const container = document.getElementById('usersTable');
+    
+    if (users.length === 0) {
+        container.innerHTML = '<div class="empty">Пользователи не найдены</div>';
+        return;
+    }
+
+    let html = `
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Имя</th>
+                    <th>Телефон</th>
+                    <th>Дата регистрации</th>
+                    <th>Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    users.forEach(user => {
+        html += `
+            <tr>
+                <td>${user.email || '-'}</td>
+                <td>${user.name || '-'}</td>
+                <td>${user.phone || '-'}</td>
+                <td>${new Date(user.createdAt).toLocaleDateString('ru-RU')}</td>
+                <td>
+                    <button class="btn btn-sm btn-info" onclick="showUserDetails('${user._id}')">Подробнее</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteUser('${user._id}')">Удалить</button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += '</tbody></table>';
+    container.innerHTML = html;
+    renderPagination('usersPagination', pagination, 'users');
+}
+
+// Настройка обработчика формы AI настроек
+document.addEventListener('DOMContentLoaded', () => {
+    const aiConfigForm = document.getElementById('aiConfigFormElement');
+    if (aiConfigForm) {
+        aiConfigForm.addEventListener('submit', saveAIConfig);
+    }
+});
+
 // Экспорт для глобального использования
 window.deleteUser = deleteUser;
 window.deleteChat = deleteChat;
 window.deleteMessage = deleteMessage;
 window.changePage = changePage;
+window.showUserDetails = showUserDetails;
+window.testAIConfig = testAIConfig;
 

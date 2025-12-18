@@ -4,6 +4,7 @@ abstract class AuthRepository {
   Future<UserModel> login(String email, String password);
   Future<UserModel> loginWithPhone(String phone, String code);
   Future<UserModel> register(String email, String password, {String? name});
+  Future<UserModel> loginWithGoogle(String idToken, String accessToken, String email, String name, {String? picture, String? googleId});
   Future<void> logout();
   Future<UserModel?> getCurrentUser();
   Future<bool> isAuthenticated();

@@ -138,3 +138,74 @@ export const submitGmailToken = async (req, res) => {
   }
 };
 
+// Google OAuth авторизация
+export const googleAuth = async (req, res) => {
+  try {
+    const { idToken, accessToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({ message: 'ID токен не предоставлен' });
+    }
+
+    // В реальном приложении здесь нужно проверить токен через Google API
+    // Для MVP используем упрощенную версию - декодируем токен (без проверки подписи)
+    // В продакшене используйте библиотеку google-auth-library или проверяйте через Google API
+    
+    // Упрощенная версия: ожидаем что клиент отправляет email и name из Google аккаунта
+    const { email, name, picture, googleId } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email не предоставлен' });
+    }
+
+    // Ищем пользователя по email или googleId
+    let user = await User.findOne({
+      $or: [
+        { email: email.toLowerCase() },
+        { googleId: googleId || idToken.substring(0, 20) }, // Временное решение для MVP
+      ],
+    });
+
+    if (!user) {
+      // Создаем нового пользователя
+      user = new User({
+        email: email.toLowerCase(),
+        name: name || null,
+        avatarUrl: picture || null,
+        googleId: googleId || idToken.substring(0, 20),
+        // Пароль не требуется для Google OAuth пользователей
+      });
+      await user.save();
+    } else {
+      // Обновляем данные пользователя если нужно
+      if (!user.googleId && googleId) {
+        user.googleId = googleId;
+      }
+      if (!user.avatarUrl && picture) {
+        user.avatarUrl = picture;
+      }
+      if (!user.name && name) {
+        user.name = name;
+      }
+      await user.save();
+    }
+
+    const { accessToken: jwtAccessToken, refreshToken } = generateTokens(user._id.toString());
+
+    res.json({
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        phone: user.phone,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+      },
+      accessToken: jwtAccessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    console.error('Ошибка Google авторизации:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+

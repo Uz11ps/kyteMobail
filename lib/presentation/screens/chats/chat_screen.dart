@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart';
 import 'dart:ui';
+import 'dart:io';
+import 'dart:html' as html;
+import 'dart:typed_data';
 import '../../bloc/chat/chat_bloc.dart';
 import '../../bloc/ai/ai_bloc.dart';
 import '../../bloc/google/google_bloc.dart';
@@ -11,6 +16,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/network/websocket_client.dart';
 import '../../../core/utils/storage_keys.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../core/constants/api_endpoints.dart';
 import 'dart:convert';
 
 class ChatScreen extends StatefulWidget {
@@ -327,7 +333,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: _InputBar(
                         controller: _messageController,
                         onSend: _sendMessage,
+                        chatId: widget.chatId,
                         onHeartPressed: () => _showPopupChat(context),
+                        onFileAttached: (fileUrl) {
+                          // Файл прикреплен, можно отправить сообщение с файлом
+                          debugPrint('Файл прикреплен: $fileUrl');
+                        },
                       ),
                     ),
                   ],
@@ -1159,11 +1170,15 @@ class _InputBar extends StatefulWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
   final VoidCallback? onHeartPressed;
+  final String chatId;
+  final Function(String)? onFileAttached;
 
   const _InputBar({
     required this.controller,
     required this.onSend,
+    required this.chatId,
     this.onHeartPressed,
+    this.onFileAttached,
   });
 
   @override
@@ -1192,6 +1207,134 @@ class _InputBarState extends State<_InputBar> {
       setState(() {
         _hasText = hasText;
       });
+    }
+  }
+
+  Future<void> _pickAndUploadFile() async {
+    try {
+      FilePickerResult? result;
+      
+      if (Platform.isAndroid || Platform.isIOS) {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          allowMultiple: false,
+        );
+      } else {
+        // Web платформа
+        html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+        uploadInput.click();
+        
+        await uploadInput.onChange.first;
+        if (uploadInput.files != null && uploadInput.files!.isNotEmpty) {
+          final file = uploadInput.files!.first;
+          await _uploadFileWeb(file);
+          return;
+        }
+      }
+
+      if (result != null && result.files.single.path != null) {
+        await _uploadFileMobile(result.files.single.path!);
+      }
+    } catch (e) {
+      debugPrint('Ошибка выбора файла: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка загрузки файла: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadFileMobile(String filePath) async {
+    try {
+      final file = File(filePath);
+      final fileName = file.path.split('/').last;
+      
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: fileName,
+        ),
+      });
+
+      final response = await ServiceLocator().apiClient.dio.post(
+        ApiEndpoints.uploadFile(widget.chatId),
+        data: formData,
+      );
+
+      if (response.data != null && response.data['file'] != null) {
+        final fileUrl = response.data['file']['url'];
+        if (widget.onFileAttached != null) {
+          widget.onFileAttached!(fileUrl);
+        }
+        
+        // Отправляем сообщение с файлом
+        final messageContent = widget.controller.text.trim();
+        if (messageContent.isNotEmpty || fileUrl != null) {
+          context.read<ChatBloc>().add(
+            MessageSent(
+              chatId: widget.chatId,
+              content: messageContent.isNotEmpty 
+                  ? '$messageContent\n📎 $fileName'
+                  : '📎 $fileName',
+            ),
+          );
+          widget.controller.clear();
+        }
+      }
+    } catch (e) {
+      debugPrint('Ошибка загрузки файла: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _uploadFileWeb(html.File file) async {
+    try {
+      final reader = html.FileReader();
+      reader.readAsArrayBuffer(file);
+      await reader.onLoadEnd.first;
+      
+      final bytes = reader.result as ByteBuffer;
+      final fileName = file.name;
+      
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes.asUint8List(),
+          filename: fileName,
+        ),
+      });
+
+      final response = await ServiceLocator().apiClient.dio.post(
+        ApiEndpoints.uploadFile(widget.chatId),
+        data: formData,
+      );
+
+      if (response.data != null && response.data['file'] != null) {
+        final fileUrl = response.data['file']['url'];
+        if (widget.onFileAttached != null) {
+          widget.onFileAttached!(fileUrl);
+        }
+        
+        // Отправляем сообщение с файлом
+        final messageContent = widget.controller.text.trim();
+        if (messageContent.isNotEmpty || fileUrl != null) {
+          context.read<ChatBloc>().add(
+            MessageSent(
+              chatId: widget.chatId,
+              content: messageContent.isNotEmpty 
+                  ? '$messageContent\n📎 $fileName'
+                  : '📎 $fileName',
+            ),
+          );
+          widget.controller.clear();
+        }
+      }
+    } catch (e) {
+      debugPrint('Ошибка загрузки файла: $e');
+      rethrow;
     }
   }
 
@@ -1230,10 +1373,10 @@ class _InputBarState extends State<_InputBar> {
                 onPressed: widget.onHeartPressed ?? () {},
               ),
               const SizedBox(width: 8),
-              // Кнопка плюса
+              // Кнопка плюса для прикрепления файлов
               _GlassButton(
                 icon: Icons.add,
-                onPressed: () {},
+                onPressed: _pickAndUploadFile,
               ),
               const SizedBox(width: 8),
               // Поле ввода
@@ -1595,24 +1738,162 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
     }
   }
 
-  void _sendPopupMessage() {
-    final content = _popupMessageController.text.trim();
+  String? _aiChatId;
+
+  Future<void> _pickAndUploadFileForAI() async {
+    try {
+      FilePickerResult? result;
+      
+      if (Platform.isAndroid || Platform.isIOS) {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          allowMultiple: false,
+        );
+      } else {
+        // Web платформа
+        html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+        uploadInput.click();
+        
+        await uploadInput.onChange.first;
+        if (uploadInput.files != null && uploadInput.files!.isNotEmpty) {
+          final file = uploadInput.files!.first;
+          await _uploadFileForAIWeb(file);
+          return;
+        }
+      }
+
+      if (result != null && result.files.single.path != null) {
+        await _uploadFileForAIMobile(result.files.single.path!);
+      }
+    } catch (e) {
+      debugPrint('Ошибка выбора файла для AI: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка загрузки файла: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadFileForAIMobile(String filePath) async {
+    try {
+      final file = File(filePath);
+      final fileName = file.path.split('/').last;
+      
+      // Получаем AI chatId
+      if (_aiChatId == null) {
+        final response = await ServiceLocator().apiClient.dio.get(
+          ApiEndpoints.aiChatHistory,
+        );
+        if (response.data != null && response.data['chatId'] != null) {
+          _aiChatId = response.data['chatId'];
+        } else {
+          throw Exception('AI чат не найден');
+        }
+      }
+
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(
+          filePath,
+          filename: fileName,
+        ),
+      });
+
+      final response = await ServiceLocator().apiClient.dio.post(
+        ApiEndpoints.uploadFile(_aiChatId!),
+        data: formData,
+      );
+
+      if (response.data != null && response.data['file'] != null) {
+        final fileUrl = response.data['file']['url'];
+        
+        // Отправляем сообщение с файлом в AI чат
+        final messageContent = _popupMessageController.text.trim();
+        final content = messageContent.isNotEmpty 
+            ? '$messageContent\n📎 $fileName'
+            : '📎 $fileName';
+        
+        await _sendPopupMessageWithContent(content);
+      }
+    } catch (e) {
+      debugPrint('Ошибка загрузки файла для AI: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _uploadFileForAIWeb(html.File file) async {
+    try {
+      final reader = html.FileReader();
+      reader.readAsArrayBuffer(file);
+      await reader.onLoadEnd.first;
+      
+      final bytes = reader.result as ByteBuffer;
+      final fileName = file.name;
+      
+      // Получаем AI chatId
+      if (_aiChatId == null) {
+        final response = await ServiceLocator().apiClient.dio.get(
+          ApiEndpoints.aiChatHistory,
+        );
+        if (response.data != null && response.data['chatId'] != null) {
+          _aiChatId = response.data['chatId'];
+        } else {
+          throw Exception('AI чат не найден');
+        }
+      }
+
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(
+          bytes.asUint8List(),
+          filename: fileName,
+        ),
+      });
+
+      final response = await ServiceLocator().apiClient.dio.post(
+        ApiEndpoints.uploadFile(_aiChatId!),
+        data: formData,
+      );
+
+      if (response.data != null && response.data['file'] != null) {
+        final fileUrl = response.data['file']['url'];
+        
+        // Отправляем сообщение с файлом в AI чат
+        final messageContent = _popupMessageController.text.trim();
+        final content = messageContent.isNotEmpty 
+            ? '$messageContent\n📎 $fileName'
+            : '📎 $fileName';
+        
+        await _sendPopupMessageWithContent(content);
+      }
+    } catch (e) {
+      debugPrint('Ошибка загрузки файла для AI: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> _sendPopupMessageWithContent(String content) async {
     if (content.isEmpty) return;
 
+    // Добавляем сообщение пользователя
+    final userMessage = MessageModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      chatId: 'popup',
+      userId: 'current_user',
+      content: content,
+      type: MessageType.text,
+      createdAt: DateTime.now(),
+    );
+
     setState(() {
-      _popupMessages.add(
-        MessageModel(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          chatId: 'popup',
-          userId: 'current_user',
-          content: content,
-          type: MessageType.text,
-          createdAt: DateTime.now(),
-        ),
-      );
+      _popupMessages.add(userMessage);
     });
 
     _popupMessageController.clear();
+    
+    // Прокручиваем к новому сообщению
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_popupScrollController.hasClients) {
         _popupScrollController.animateTo(
@@ -1622,6 +1903,57 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
         );
       }
     });
+
+    // Отправляем запрос к AI
+    try {
+      final response = await ServiceLocator().apiClient.dio.post(
+        ApiEndpoints.aiChat,
+        data: {'question': content},
+      );
+      
+      if (response.data != null) {
+        final userMessageData = response.data['userMessage'];
+        final aiMessageData = response.data['aiMessage'];
+        
+        if (userMessageData != null) {
+          setState(() {
+            _popupMessages.add(MessageModel.fromJson(userMessageData));
+          });
+        }
+        
+        if (aiMessageData != null) {
+          setState(() {
+            _popupMessages.add(MessageModel.fromJson(aiMessageData));
+          });
+          
+          // Прокручиваем к ответу AI
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_popupScrollController.hasClients) {
+              _popupScrollController.animateTo(
+                _popupScrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Ошибка отправки сообщения AI: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка отправки сообщения: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _sendPopupMessage() async {
+    final content = _popupMessageController.text.trim();
+    await _sendPopupMessageWithContent(content);
   }
 
   @override
@@ -1784,10 +2116,10 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
                       Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          // Кнопка плюса
+                          // Кнопка плюса для прикрепления файлов
                           _GlassButton(
                             icon: Icons.add,
-                            onPressed: () {},
+                            onPressed: _pickAndUploadFileForAI,
                           ),
                           const SizedBox(width: 8),
                           // Поле ввода
