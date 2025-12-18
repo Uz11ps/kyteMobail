@@ -23,11 +23,18 @@ class _LoginScreenState extends State<LoginScreen> {
   final _codeController = TextEditingController();
   GoogleSignIn? _googleSignIn;
   
-  GoogleSignIn get googleSignIn {
-    _googleSignIn ??= GoogleSignIn(
-      scopes: ['email', 'profile'],
-    );
-    return _googleSignIn!;
+  GoogleSignIn? get googleSignIn {
+    if (_googleSignIn == null) {
+      try {
+        _googleSignIn = GoogleSignIn(
+          scopes: ['email', 'profile'],
+        );
+      } catch (e) {
+        debugPrint('⚠️  Ошибка инициализации GoogleSignIn: $e');
+        return null;
+      }
+    }
+    return _googleSignIn;
   }
 
   @override
@@ -61,14 +68,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleGoogleSignIn() async {
     try {
-      final GoogleSignInAccount? account = await googleSignIn.signIn();
+      // Проверка доступности GoogleSignIn
+      final signIn = googleSignIn;
+      if (signIn == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Google Sign In недоступен на этой платформе'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      
+      final GoogleSignInAccount? account = await signIn.signIn();
       if (account == null) {
         // Пользователь отменил вход
         return;
       }
 
       // Проверяем наличие email перед запросом authentication
-      if (account.email == null || account.email!.isEmpty) {
+      final accountEmail = account.email;
+      if (accountEmail == null || accountEmail.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Не удалось получить email от Google'),
@@ -82,6 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         auth = await account.authentication;
       } catch (e) {
+        debugPrint('❌ Ошибка получения authentication: $e');
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Ошибка получения данных от Google: ${e.toString()}'),
@@ -129,14 +150,15 @@ class _LoginScreenState extends State<LoginScreen> {
         AuthGoogleLoginRequested(
           idToken: idToken,
           accessToken: accessToken,
-          email: account.email!,
+          email: accountEmail,
           name: account.displayName ?? '',
           picture: account.photoUrl,
           googleId: account.id,
         ),
       );
-    } catch (e) {
-      print('❌ Google sign in error: $e');
+    } catch (e, stackTrace) {
+      debugPrint('❌ Google sign in error: $e');
+      debugPrint('   Stack trace: $stackTrace');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Ошибка входа через Google: ${e.toString()}'),
