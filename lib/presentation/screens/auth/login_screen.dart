@@ -101,19 +101,26 @@ class _LoginScreenState extends State<LoginScreen> {
       GoogleSignInAuthentication? auth;
       try {
         auth = await account.authentication;
-      } catch (e) {
+      } catch (e, stackTrace) {
         String errorMessage = 'Ошибка получения данных от Google';
         try {
           if (e != null) {
-            final errorStr = e.toString();
-            if (errorStr.isNotEmpty) {
-              errorMessage = errorStr;
+            try {
+              final errorStr = e.toString();
+              if (errorStr.isNotEmpty && errorStr != 'null') {
+                errorMessage = errorStr;
+              }
+            } catch (toStringError) {
+              // Если toString() сам выбрасывает ошибку, используем сообщение по умолчанию
+              debugPrint('❌ Ошибка при вызове toString(): $toStringError');
             }
           }
-        } catch (_) {
-          // Используем сообщение по умолчанию
+        } catch (parseError) {
+          // Если проверка e != null выбрасывает ошибку, используем сообщение по умолчанию
+          debugPrint('❌ Ошибка при проверке ошибки: $parseError');
         }
         debugPrint('❌ Ошибка получения authentication: $errorMessage');
+        debugPrint('   Тип ошибки: ${e.runtimeType}');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -173,21 +180,32 @@ class _LoginScreenState extends State<LoginScreen> {
       String errorMessage = 'Ошибка входа через Google';
       try {
         if (e != null) {
-          final errorStr = e.toString();
-          if (errorStr.isNotEmpty) {
-            errorMessage = errorStr;
+          try {
+            final errorStr = e.toString();
+            if (errorStr.isNotEmpty && errorStr != 'null') {
+              errorMessage = errorStr;
+            }
+          } catch (toStringError) {
+            // Если toString() сам выбрасывает ошибку, используем сообщение по умолчанию
+            debugPrint('❌ Ошибка при вызове toString(): $toStringError');
+          }
+        }
+      } catch (parseError) {
+        // Если проверка e != null выбрасывает ошибку, используем сообщение по умолчанию
+        debugPrint('❌ Ошибка при проверке ошибки: $parseError');
+      }
+      debugPrint('❌ Google sign in error: $errorMessage');
+      debugPrint('   Тип ошибки: ${e.runtimeType}');
+      try {
+        if (stackTrace != null) {
+          try {
+            debugPrint('   Stack trace: $stackTrace');
+          } catch (traceError) {
+            debugPrint('   Ошибка при логировании stack trace: $traceError');
           }
         }
       } catch (_) {
-        // Используем сообщение по умолчанию
-      }
-      debugPrint('❌ Google sign in error: $errorMessage');
-      try {
-        if (stackTrace != null) {
-          debugPrint('   Stack trace: $stackTrace');
-        }
-      } catch (_) {
-        // Игнорируем ошибки при логировании stack trace
+        // Игнорируем ошибки при проверке stackTrace
       }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
