@@ -7,6 +7,7 @@ import '../../../data/models/user_model.dart';
 import '../../../data/repositories/auth_repository_impl.dart';
 import '../../../core/di/service_locator.dart';
 import '../../../core/config/app_config.dart';
+import '../../../core/routing/app_router.dart';
 import 'package:intl/intl.dart';
 import 'edit_profile_screen.dart';
 
@@ -90,10 +91,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1D2631),
-      body: SafeArea(
-        child: Column(
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRouter.login,
+            (route) => false,
+          );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF1D2631),
+        body: SafeArea(
+          child: Column(
           children: [
             // Заголовок со стеклянным фоном
             ClipRRect(
@@ -396,6 +406,93 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             value: _about ?? 'Не указано',
                             isMultiline: true,
                             height: 2,
+                          ),
+                          const SizedBox(height: 24),
+                          // Кнопка выхода
+                          SizedBox(
+                            width: double.infinity,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () async {
+                                      final shouldLogout = await showDialog<bool>(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          backgroundColor: const Color(0xFF1D2631),
+                                          title: const Text(
+                                            'Выход',
+                                            style: TextStyle(color: Colors.white),
+                                          ),
+                                          content: const Text(
+                                            'Вы уверены, что хотите выйти?',
+                                            style: TextStyle(color: Colors.white70),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(false),
+                                              child: const Text('Отмена'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () => Navigator.of(context).pop(true),
+                                              style: TextButton.styleFrom(
+                                                foregroundColor: Colors.red,
+                                              ),
+                                              child: const Text('Выйти'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      
+                                      if (shouldLogout == true) {
+                                        context.read<AuthBloc>().add(AuthLogoutRequested());
+                                        // Навигация на экран входа будет обработана через BlocListener
+                                      }
+                                    },
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                          colors: [
+                                            Colors.red.withOpacity(0.2),
+                                            Colors.red.withOpacity(0.1),
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.circular(18),
+                                        border: Border.all(
+                                          color: Colors.red.withOpacity(0.3),
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: const Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            Icons.logout,
+                                            color: Colors.red,
+                                            size: 20,
+                                          ),
+                                          SizedBox(width: 8),
+                                          Text(
+                                            'Выйти',
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
                         ],
                       ),

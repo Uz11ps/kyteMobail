@@ -57,6 +57,6 @@ class AuthGoogleLoginRequested extends AuthEvent {
   });
 
   @override
-  List<Object?> get props => [idToken, accessToken, email, name, picture, googleId];
+  List<Object> get props => [idToken, accessToken, email, name, picture ?? '', googleId ?? ''];
 }
 
