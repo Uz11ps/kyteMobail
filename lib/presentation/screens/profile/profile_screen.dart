@@ -104,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: const Color(0xFF1D2631),
         body: SafeArea(
           child: Column(
-          children: [
+            children: [
             // Заголовок со стеклянным фоном
             ClipRRect(
               child: BackdropFilter(
