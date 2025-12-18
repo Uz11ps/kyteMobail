@@ -38,9 +38,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   ) async {
     emit(MessagesLoading());
     try {
+      print('🔄 Loading messages for chat: ${event.chatId}');
       final messages = await chatRepository.getMessages(event.chatId);
+      print('✅ Loaded ${messages.length} messages');
       emit(MessagesLoaded(messages: messages));
     } catch (e) {
+      print('❌ Error loading messages: $e');
       emit(ChatError(message: e.toString()));
     }
   }

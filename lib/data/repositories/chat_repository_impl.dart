@@ -84,19 +84,48 @@ class ChatRepositoryImpl implements ChatRepository {
   @override
   Future<List<MessageModel>> getMessages(String chatId, {int limit = 100}) async {
     try {
+      print('📋 Loading messages for chat: $chatId');
       final response = await _dio.get(
         ApiEndpoints.messagesForChat(chatId),
         queryParameters: {'limit': limit},
       );
+      print('✅ Messages response: ${response.statusCode}');
+      print('   Data: ${response.data}');
+      
+      if (response.data == null) {
+        print('⚠️ Response data is null');
+        return [];
+      }
+      
       final data = _extractList(response.data, key: 'messages');
-      return data
+      print('📋 Extracted ${data.length} messages');
+      
+      final messages = data
           .whereType<Map<String, dynamic>>()
-          .map(MessageModel.fromJson)
+          .map((json) {
+            try {
+              return MessageModel.fromJson(json);
+            } catch (e) {
+              print('❌ Error parsing message: $e, json: $json');
+              return null;
+            }
+          })
+          .whereType<MessageModel>()
           .toList();
+      
+      print('✅ Parsed ${messages.length} messages successfully');
+      return messages;
     } on DioException catch (e) {
+      print('❌ DioException loading messages: ${e.type}');
+      print('   Status: ${e.response?.statusCode}');
+      print('   Data: ${e.response?.data}');
+      print('   Message: ${e.message}');
       throw Exception(
         _extractErrorMessage(e.response?.data, 'Ошибка загрузки сообщений'),
       );
+    } catch (e) {
+      print('❌ Unexpected error loading messages: $e');
+      throw Exception('Ошибка загрузки сообщений: ${e.toString()}');
     }
   }
 

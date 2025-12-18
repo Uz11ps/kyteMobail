@@ -185,6 +185,7 @@ class _ChatScreenState extends State<ChatScreen> {
         child: BlocListener<ChatBloc, ChatState>(
           listener: (context, state) {
             if (state is MessagesLoaded) {
+              debugPrint('📥 MessagesLoaded: ${state.messages.length} messages');
               setState(() {
                 _messages = state.messages;
               });
@@ -195,13 +196,18 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
               });
             } else if (state is ChatError) {
+              debugPrint('❌ ChatError: ${state.message}');
               // Показываем ошибку пользователю
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Ошибка: ${state.message}'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Ошибка: ${state.message}'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            } else if (state is MessagesLoading) {
+              debugPrint('⏳ MessagesLoading...');
             }
           },
           child: Scaffold(
@@ -218,19 +224,43 @@ class _ChatScreenState extends State<ChatScreen> {
                       builder: (context, state) {
                         // Показываем индикатор загрузки только при первой загрузке
                         if (state is MessagesLoading && _messages.isEmpty) {
-                          return const Center(child: CircularProgressIndicator());
+                          return const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          );
                         }
 
                         // Используем сообщения из state, если они есть, иначе из локального списка
                         final messagesToShow = state is MessagesLoaded ? state.messages : _messages;
+                        
+                        debugPrint('📋 Building ListView with ${messagesToShow.length} messages');
 
                         if (messagesToShow.isEmpty) {
                           return Center(
-                            child: Text(
-                              'Нет сообщений',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: Colors.white.withOpacity(0.7),
-                                  ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.chat_bubble_outline,
+                                  size: 64,
+                                  color: Colors.white.withOpacity(0.5),
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  'Нет сообщений',
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: Colors.white.withOpacity(0.7),
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Начните переписку',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: Colors.white.withOpacity(0.5),
+                                      ),
+                                ),
+                              ],
                             ),
                           );
                         }
@@ -238,6 +268,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         return ListView.builder(
                           controller: _scrollController,
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 100), // Отступ сверху для стеклянного контейнера
+                          reverse: false, // Сообщения идут сверху вниз
                           itemCount: messagesToShow.length,
                           itemBuilder: (context, index) {
                             final message = messagesToShow[index];
