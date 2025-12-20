@@ -11,6 +11,21 @@ class AuthRepositoryImpl implements AuthRepository {
 
   AuthRepositoryImpl(this._dio);
 
+  String _extractErrorMessage(dynamic data, String fallback) {
+    if (data is Map && data['message'] != null) return data['message'].toString();
+    if (data is String && data.trim().isNotEmpty) {
+      final s = data.trim();
+      final lower = s.toLowerCase();
+      if (lower.contains('<!doctype html') ||
+          lower.contains('<html') ||
+          lower.contains('cannot get')) {
+        return 'API недоступен по ожидаемому адресу. Проверьте, что baseUrl указывает на /api.';
+      }
+      return s;
+    }
+    return fallback;
+  }
+
   @override
   Future<UserModel> login(String email, String password) async {
     try {
@@ -129,9 +144,6 @@ class AuthRepositoryImpl implements AuthRepository {
       await _storage.write(StorageKeys.refreshToken, newRefreshToken.toString());
       await _storage.write(StorageKeys.userId, user.id);
       await _storage.write(StorageKeys.userEmail, user.email);
-      if (user.name != null) {
-        await _storage.write(StorageKeys.userName, user.name!);
-      }
 
       return user;
     } on DioException catch (e) {
@@ -207,9 +219,6 @@ class AuthRepositoryImpl implements AuthRepository {
       await _storage.write(StorageKeys.refreshToken, newRefreshToken.toString());
       await _storage.write(StorageKeys.userId, user.id);
       await _storage.write(StorageKeys.userEmail, user.email);
-      if (user.name != null) {
-        await _storage.write(StorageKeys.userName, user.name!);
-      }
 
       return user;
     } on DioException catch (e) {
