@@ -54,14 +54,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _handleSendCode() {
-    if (_phoneController.text.isEmpty) {
+    // Валидация номера телефона перед отправкой
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Введите номер телефона')),
       );
       return;
     }
+    
+    // Нормализация номера телефона
+    String normalizedPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    if (!normalizedPhone.startsWith('+')) {
+      if (normalizedPhone.startsWith('8')) {
+        normalizedPhone = '+7' + normalizedPhone.substring(1);
+      } else if (normalizedPhone.startsWith('7')) {
+        normalizedPhone = '+' + normalizedPhone;
+      } else {
+        normalizedPhone = '+7' + normalizedPhone;
+      }
+    }
+    
     context.read<AuthBloc>().add(
-      AuthPhoneCodeSendRequested(phone: _phoneController.text),
+      AuthPhoneCodeSendRequested(phone: normalizedPhone),
     );
   }
 
@@ -73,11 +88,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _handleSendCode();
         return;
       }
+      
+      // Нормализация номера телефона перед регистрацией
+      String normalizedPhone = _phoneController.text.trim().replaceAll(RegExp(r'[^\d+]'), '');
+      if (!normalizedPhone.startsWith('+')) {
+        if (normalizedPhone.startsWith('8')) {
+          normalizedPhone = '+7' + normalizedPhone.substring(1);
+        } else if (normalizedPhone.startsWith('7')) {
+          normalizedPhone = '+' + normalizedPhone;
+        } else {
+          normalizedPhone = '+7' + normalizedPhone;
+        }
+      }
+      
       context.read<AuthBloc>().add(
         AuthPhoneRegisterRequested(
-          phone: _phoneController.text,
-          code: _codeController.text,
-          name: _nameController.text.isEmpty ? null : _nameController.text,
+          phone: normalizedPhone,
+          code: _codeController.text.trim(),
+          name: _nameController.text.isEmpty ? null : _nameController.text.trim(),
         ),
       );
     } else {
@@ -95,12 +123,29 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (value == null || value.isEmpty) {
       return 'Введите номер телефона';
     }
-    // Простая валидация - можно улучшить
-    final phoneRegex = RegExp(r'^\+?[0-9]{10,15}$');
-    final cleaned = value.replaceAll(RegExp(r'[^\d+]'), '');
-    if (!phoneRegex.hasMatch(cleaned)) {
-      return 'Введите корректный номер телефона';
+    
+    // Нормализация номера для проверки
+    String cleaned = value.replaceAll(RegExp(r'[^\d+]'), '');
+    
+    // Если номер начинается с 8, заменяем на +7
+    if (cleaned.startsWith('8')) {
+      cleaned = '+7' + cleaned.substring(1);
     }
+    // Если номер начинается с 7, добавляем +
+    else if (cleaned.startsWith('7') && !cleaned.startsWith('+7')) {
+      cleaned = '+' + cleaned;
+    }
+    // Если номер не начинается с +, добавляем +7
+    else if (!cleaned.startsWith('+')) {
+      cleaned = '+7' + cleaned;
+    }
+    
+    // Проверка формата: +7XXXXXXXXXX (11 цифр после +7)
+    final phoneRegex = RegExp(r'^\+7\d{10}$');
+    if (!phoneRegex.hasMatch(cleaned)) {
+      return 'Введите номер в формате +7XXXXXXXXXX (11 цифр)';
+    }
+    
     return null;
   }
 
@@ -208,12 +253,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         labelText: 'Номер телефона',
                         hintText: '+7 (999) 123-45-67',
                         prefixIcon: Icon(Icons.phone),
+                        helperText: 'Введите номер в формате +7XXXXXXXXXX',
                       ),
                       keyboardType: TextInputType.phone,
                       enabled: !_codeSent,
                       validator: _validatePhone,
                     ),
+                    if (!_codeSent) ...[
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            _handleSendCode();
+                          }
+                        },
+                        icon: const Icon(Icons.send),
+                        label: const Text('Получить код'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    ],
                     if (_codeSent) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.green),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Код отправлен на ${_phoneController.text}',
+                                style: const TextStyle(color: Colors.green),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _codeController,
@@ -347,7 +430,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 child: CircularProgressIndicator(strokeWidth: 2),
                               )
                             : Text(_isPhoneMode && !_codeSent
-                                ? 'Отправить код'
+                                ? 'Зарегистрироваться'
                                 : 'Зарегистрироваться'),
                       );
                     },

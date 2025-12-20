@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:async';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../core/config/app_config.dart';
@@ -19,9 +20,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isPhoneMode = false;
+  bool _codeSent = false;
   final _phoneController = TextEditingController();
   final _codeController = TextEditingController();
   GoogleSignIn? _googleSignIn;
+  Timer? _resendTimer;
+  int _resendSeconds = 60;
   
   GoogleSignIn? get googleSignIn {
     if (_googleSignIn == null) {
@@ -43,19 +47,108 @@ class _LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     _phoneController.dispose();
     _codeController.dispose();
+    _resendTimer?.cancel();
     super.dispose();
+  }
+
+  void _startResendTimer() {
+    _resendSeconds = 60;
+    _resendTimer?.cancel();
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_resendSeconds > 0) {
+        setState(() {
+          _resendSeconds--;
+        });
+      } else {
+        timer.cancel();
+      }
+    });
+  }
+
+  void _handleSendCode() {
+    // Валидация номера телефона перед отправкой
+    final phone = _phoneController.text.trim();
+    if (phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Введите номер телефона')),
+      );
+      return;
+    }
+    
+    // Нормализация номера телефона
+    String normalizedPhone = phone.replaceAll(RegExp(r'[^\d+]'), '');
+    if (!normalizedPhone.startsWith('+')) {
+      if (normalizedPhone.startsWith('8')) {
+        normalizedPhone = '+7' + normalizedPhone.substring(1);
+      } else if (normalizedPhone.startsWith('7')) {
+        normalizedPhone = '+' + normalizedPhone;
+      } else {
+        normalizedPhone = '+7' + normalizedPhone;
+      }
+    }
+    
+    context.read<AuthBloc>().add(
+      AuthPhoneCodeSendRequested(phone: normalizedPhone),
+    );
+  }
+
+  String? _validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Введите номер телефона';
+    }
+    
+    // Нормализация номера для проверки
+    String cleaned = value.replaceAll(RegExp(r'[^\d+]'), '');
+    
+    // Если номер начинается с 8, заменяем на +7
+    if (cleaned.startsWith('8')) {
+      cleaned = '+7' + cleaned.substring(1);
+    }
+    // Если номер начинается с 7, добавляем +
+    else if (cleaned.startsWith('7') && !cleaned.startsWith('+7')) {
+      cleaned = '+' + cleaned;
+    }
+    // Если номер не начинается с +, добавляем +7
+    else if (!cleaned.startsWith('+')) {
+      cleaned = '+7' + cleaned;
+    }
+    
+    // Проверка формата: +7XXXXXXXXXX (11 цифр после +7)
+    final phoneRegex = RegExp(r'^\+7\d{10}$');
+    if (!phoneRegex.hasMatch(cleaned)) {
+      return 'Введите номер в формате +7XXXXXXXXXX (11 цифр)';
+    }
+    
+    return null;
   }
 
   void _handleLogin() {
     if (!_formKey.currentState!.validate()) return;
 
     if (_isPhoneMode) {
+      if (!_codeSent) {
+        _handleSendCode();
+        return;
+      }
+      
+      // Нормализация номера телефона перед входом
+      String normalizedPhone = _phoneController.text.trim().replaceAll(RegExp(r'[^\d+]'), '');
+      if (!normalizedPhone.startsWith('+')) {
+        if (normalizedPhone.startsWith('8')) {
+          normalizedPhone = '+7' + normalizedPhone.substring(1);
+        } else if (normalizedPhone.startsWith('7')) {
+          normalizedPhone = '+' + normalizedPhone;
+        } else {
+          normalizedPhone = '+7' + normalizedPhone;
+        }
+      }
+      
       context.read<AuthBloc>().add(
-            AuthLoginRequested(
-              email: _phoneController.text,
-              password: _codeController.text,
-            ),
-          );
+        AuthPhoneLoginRequested(
+          phone: normalizedPhone,
+          code: _codeController.text.trim(),
+        ),
+      );
     } else {
       context.read<AuthBloc>().add(
             AuthLoginRequested(
@@ -236,6 +329,17 @@ class _LoginScreenState extends State<LoginScreen> {
       listener: (context, state) {
         if (state is AuthAuthenticated) {
           Navigator.of(context).pushReplacementNamed(AppRouter.chats);
+        } else if (state is AuthPhoneCodeSent) {
+          setState(() {
+            _codeSent = true;
+          });
+          _startResendTimer();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Код отправлен на ваш номер телефона'),
+              backgroundColor: Colors.green,
+            ),
+          );
         } else if (state is AuthError) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -278,7 +382,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       TextButton(
-                        onPressed: () => setState(() => _isPhoneMode = false),
+                        onPressed: () => setState(() {
+                          _isPhoneMode = false;
+                          _codeSent = false;
+                          _resendTimer?.cancel();
+                        }),
                         child: Text(
                           'Email',
                           style: TextStyle(
@@ -287,7 +395,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       TextButton(
-                        onPressed: () => setState(() => _isPhoneMode = true),
+                        onPressed: () => setState(() {
+                          _isPhoneMode = true;
+                          _codeSent = false;
+                          _resendTimer?.cancel();
+                        }),
                         child: Text(
                           'Телефон',
                           style: TextStyle(
@@ -305,31 +417,94 @@ class _LoginScreenState extends State<LoginScreen> {
                         labelText: 'Номер телефона',
                         hintText: '+7 (999) 123-45-67',
                         prefixIcon: Icon(Icons.phone),
+                        helperText: 'Введите номер в формате +7XXXXXXXXXX',
                       ),
                       keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Введите номер телефона';
-                        }
-                        return null;
-                      },
+                      enabled: !_codeSent,
+                      validator: _validatePhone,
                     ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _codeController,
-                      decoration: const InputDecoration(
-                        labelText: 'Код подтверждения',
-                        hintText: '123456',
-                        prefixIcon: Icon(Icons.lock),
+                    if (!_codeSent) ...[
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            _handleSendCode();
+                          }
+                        },
+                        icon: const Icon(Icons.send),
+                        label: const Text('Получить код'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
                       ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Введите код подтверждения';
-                        }
-                        return null;
-                      },
-                    ),
+                    ],
+                    if (_codeSent) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.green),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.check_circle, color: Colors.green),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Код отправлен на ${_phoneController.text}',
+                                style: const TextStyle(color: Colors.green),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _codeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Код подтверждения',
+                          hintText: '123456',
+                          prefixIcon: Icon(Icons.lock),
+                        ),
+                        keyboardType: TextInputType.number,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите код подтверждения';
+                          }
+                          if (value.length != 6) {
+                            return 'Код должен состоять из 6 цифр';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Не получили код? ',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          TextButton(
+                            onPressed: _resendSeconds > 0
+                                ? null
+                                : () {
+                                    setState(() {
+                                      _codeSent = false;
+                                    });
+                                    _handleSendCode();
+                                  },
+                            child: Text(
+                              _resendSeconds > 0
+                                  ? 'Повторить через $_resendSeconds сек'
+                                  : 'Отправить повторно',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ] else ...[
                     TextFormField(
                       controller: _emailController,

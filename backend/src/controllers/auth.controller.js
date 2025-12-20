@@ -217,14 +217,19 @@ export const googleAuth = async (req, res) => {
  */
 export const sendPhoneCode = async (req, res) => {
   try {
+    console.log('📞 Получен запрос на отправку SMS кода:', req.body);
     const { phone } = req.body;
+    console.log('📞 Номер телефона:', phone);
+    console.log('📞 SMS_PROVIDER из env:', process.env.SMS_PROVIDER);
 
     if (!phone) {
       return res.status(400).json({ message: 'Номер телефона не указан' });
     }
 
     // Валидация и нормализация номера
+    console.log('📞 Вызов smsService.validatePhone...');
     const validation = smsService.validatePhone(phone);
+    console.log('📞 Результат валидации:', validation);
     if (!validation.valid) {
       return res.status(400).json({ message: validation.error });
     }
@@ -264,9 +269,12 @@ export const sendPhoneCode = async (req, res) => {
     await verification.save();
 
     // Отправляем SMS
+    console.log('📱 Отправка SMS кода на номер:', normalizedPhone);
     const smsResult = await smsService.sendVerificationCode(normalizedPhone, code);
+    console.log('📱 Результат отправки SMS:', smsResult);
 
     if (!smsResult.success) {
+      console.error('❌ Ошибка отправки SMS:', smsResult.message);
       return res.status(500).json({ message: smsResult.message || 'Ошибка отправки SMS' });
     }
 

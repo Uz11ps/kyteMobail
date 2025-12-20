@@ -6,6 +6,12 @@
 
 class SMSService {
   constructor() {
+    // Логируем переменные окружения для отладки
+    console.log('🔍 SMSService constructor: SMS_PROVIDER =', process.env.SMS_PROVIDER);
+    console.log('🔍 SMSService constructor: AWS_ACCESS_KEY_ID =', process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET');
+    console.log('🔍 SMSService constructor: AWS_SECRET_ACCESS_KEY =', process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET');
+    console.log('🔍 SMSService constructor: AWS_REGION =', process.env.AWS_REGION);
+    
     this.provider = process.env.SMS_PROVIDER || 'mock'; // mock, twilio, aws, smsru
     this.initProvider();
   }
@@ -88,6 +94,7 @@ class SMSService {
    * Поддерживает отправку в Россию и Казахстан
    */
   async sendViaAWS(phone, message) {
+    console.log('📤 Отправка SMS через AWS SNS на номер:', phone);
     // Динамический импорт для ES modules
     const AWSModule = await import('aws-sdk');
     const AWS = AWSModule.default || AWSModule;
@@ -96,7 +103,10 @@ class SMSService {
     const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
     const region = process.env.AWS_REGION || 'us-east-1';
 
+    console.log('🔍 AWS Config: region =', region, 'accessKeyId =', accessKeyId ? 'SET' : 'NOT SET');
+
     if (!accessKeyId || !secretAccessKey) {
+      console.error('❌ AWS credentials не настроены');
       throw new Error('AWS credentials не настроены');
     }
 
@@ -121,16 +131,26 @@ class SMSService {
     try {
       const result = await sns.publish(params).promise();
       console.log(`✅ SMS отправлено через AWS SNS. MessageId: ${result.MessageId}, Phone: ${phone}`);
+      console.log(`📋 Полный ответ AWS SNS:`, JSON.stringify(result, null, 2));
       return { success: true, messageId: result.MessageId };
     } catch (error) {
-      console.error('❌ Ошибка отправки SMS через AWS SNS:', error);
+      console.error('❌ Ошибка отправки SMS через AWS SNS:');
+      console.error('   Код ошибки:', error.code);
+      console.error('   Сообщение:', error.message);
+      console.error('   Статус код:', error.statusCode);
+      console.error('   Полная ошибка:', JSON.stringify(error, null, 2));
+      
       // Более детальная обработка ошибок
       if (error.code === 'InvalidParameter') {
-        throw new Error(`Неверный формат номера телефона: ${phone}`);
+        throw new Error(`Неверный формат номера телефона: ${phone}. Детали: ${error.message}`);
       } else if (error.code === 'Throttling') {
         throw new Error('Превышен лимит отправки SMS. Попробуйте позже.');
       } else if (error.code === 'OptedOut') {
         throw new Error('Номер телефона отписан от получения SMS.');
+      } else if (error.code === 'AuthorizationError') {
+        throw new Error('Ошибка авторизации AWS. Проверьте credentials и права доступа.');
+      } else if (error.message && error.message.includes('Sandbox')) {
+        throw new Error('AWS SNS находится в Sandbox режиме. Нужно запросить production доступ или добавить номер в список верифицированных.');
       } else {
         throw new Error(`Ошибка AWS SNS: ${error.message || error.code || 'Неизвестная ошибка'}`);
       }

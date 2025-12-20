@@ -16,6 +16,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthGoogleLoginRequested>(_onAuthGoogleLoginRequested);
     on<AuthPhoneCodeSendRequested>(_onAuthPhoneCodeSendRequested);
     on<AuthPhoneRegisterRequested>(_onAuthPhoneRegisterRequested);
+    on<AuthPhoneLoginRequested>(_onAuthPhoneLoginRequested);
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
   }
 
@@ -132,6 +133,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         event.phone,
         event.code,
         name: event.name,
+      );
+      emit(AuthAuthenticated(user: user));
+    } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      emit(AuthError(message: errorMessage));
+    }
+  }
+
+  Future<void> _onAuthPhoneLoginRequested(
+    AuthPhoneLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final user = await authRepository.loginWithPhone(
+        event.phone,
+        event.code,
       );
       emit(AuthAuthenticated(user: user));
     } catch (e) {

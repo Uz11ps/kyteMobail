@@ -84,3 +84,16 @@ class AuthPhoneRegisterRequested extends AuthEvent {
   List<Object> get props => [phone, code, name ?? ''];
 }
 
+class AuthPhoneLoginRequested extends AuthEvent {
+  final String phone;
+  final String code;
+
+  const AuthPhoneLoginRequested({
+    required this.phone,
+    required this.code,
+  });
+
+  @override
+  List<Object> get props => [phone, code];
+}
+
