@@ -31,3 +31,7 @@ class AuthError extends AuthState {
   List<Object> get props => [message];
 }
 
+class AuthPhoneCodeSent extends AuthState {
+  const AuthPhoneCodeSent();
+}
+

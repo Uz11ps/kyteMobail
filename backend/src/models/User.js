@@ -4,8 +4,11 @@ import bcrypt from 'bcryptjs';
 const userSchema = new mongoose.Schema({
   email: {
     type: String,
-    required: true,
+    required: function() {
+      return !this.phone && !this.googleId; // Email обязателен если нет телефона и Google ID
+    },
     unique: true,
+    sparse: true,
     lowercase: true,
     trim: true,
   },
@@ -17,7 +20,7 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: function() {
-      return !this.phone; // Пароль не обязателен если есть телефон
+      return !this.phone && !this.googleId; // Пароль не обязателен если есть телефон или Google ID
     },
   },
   name: {

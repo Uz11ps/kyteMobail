@@ -1,6 +1,8 @@
 import { User } from '../models/User.js';
+import { PhoneVerification } from '../models/PhoneVerification.js';
 import { generateTokens, verifyToken } from '../utils/jwt.js';
 import { encrypt } from '../utils/encryption.js';
+import { smsService } from '../services/sms.service.js';
 
 export const login = async (req, res) => {
   try {
@@ -205,6 +207,162 @@ export const googleAuth = async (req, res) => {
     });
   } catch (error) {
     console.error('Ошибка Google авторизации:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
+/**
+ * Отправка SMS кода для регистрации/входа по телефону
+ * POST /api/auth/phone/send-code
+ */
+export const sendPhoneCode = async (req, res) => {
+  try {
+    const { phone } = req.body;
+
+    if (!phone) {
+      return res.status(400).json({ message: 'Номер телефона не указан' });
+    }
+
+    // Валидация и нормализация номера
+    const validation = smsService.validatePhone(phone);
+    if (!validation.valid) {
+      return res.status(400).json({ message: validation.error });
+    }
+
+    const normalizedPhone = validation.normalized;
+
+    // Проверка лимита отправки (не более 3 кодов в час)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentCodes = await PhoneVerification.countDocuments({
+      phone: normalizedPhone,
+      createdAt: { $gte: oneHourAgo },
+    });
+
+    if (recentCodes >= 3) {
+      return res.status(429).json({ 
+        message: 'Превышен лимит запросов. Попробуйте позже.' 
+      });
+    }
+
+    // Генерируем код
+    const code = PhoneVerification.generateCode();
+
+    // Удаляем старые неиспользованные коды для этого номера
+    await PhoneVerification.deleteMany({
+      phone: normalizedPhone,
+      verified: false,
+    });
+
+    // Создаем новую запись верификации (код действителен 10 минут)
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const verification = new PhoneVerification({
+      phone: normalizedPhone,
+      code,
+      expiresAt,
+    });
+
+    await verification.save();
+
+    // Отправляем SMS
+    const smsResult = await smsService.sendVerificationCode(normalizedPhone, code);
+
+    if (!smsResult.success) {
+      return res.status(500).json({ message: smsResult.message || 'Ошибка отправки SMS' });
+    }
+
+    // В мок-режиме возвращаем код для тестирования
+    const response = {
+      success: true,
+      message: 'Код отправлен',
+      expiresIn: 600, // секунды
+    };
+
+    // В мок-режиме или для разработки возвращаем код
+    if (process.env.SMS_PROVIDER === 'mock' || process.env.NODE_ENV === 'development') {
+      response.code = code; // Только для разработки!
+    }
+
+    res.json(response);
+  } catch (error) {
+    console.error('Ошибка отправки SMS кода:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
+/**
+ * Проверка SMS кода и регистрация/вход по телефону
+ * POST /api/auth/phone/verify-code
+ */
+export const verifyPhoneCode = async (req, res) => {
+  try {
+    const { phone, code, name } = req.body;
+
+    if (!phone || !code) {
+      return res.status(400).json({ message: 'Номер телефона и код обязательны' });
+    }
+
+    // Валидация и нормализация номера
+    const validation = smsService.validatePhone(phone);
+    if (!validation.valid) {
+      return res.status(400).json({ message: validation.error });
+    }
+
+    const normalizedPhone = validation.normalized;
+
+    // Находим актуальную верификацию
+    const verification = await PhoneVerification.findOne({
+      phone: normalizedPhone,
+      verified: false,
+    }).sort({ createdAt: -1 });
+
+    if (!verification) {
+      return res.status(400).json({ message: 'Код не найден. Запросите новый код.' });
+    }
+
+    // Проверяем код
+    const verifyResult = verification.verifyCode(code);
+    await verification.save();
+
+    if (!verifyResult.success) {
+      return res.status(400).json({ 
+        message: verifyResult.message,
+        attemptsLeft: verifyResult.attemptsLeft,
+      });
+    }
+
+    // Ищем существующего пользователя
+    let user = await User.findOne({ phone: normalizedPhone });
+
+    if (!user) {
+      // Регистрация нового пользователя
+      user = new User({
+        phone: normalizedPhone,
+        name: name || null,
+        // Email не обязателен для регистрации по телефону
+        email: `phone_${normalizedPhone.replace(/[^\d]/g, '')}@temp.kyte.me`, // Временный email
+      });
+      await user.save();
+    }
+
+    // Генерируем токены
+    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+
+    // Удаляем использованный код
+    await PhoneVerification.deleteOne({ _id: verification._id });
+
+    res.json({
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        phone: user.phone,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+      },
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    console.error('Ошибка верификации кода:', error);
     res.status(500).json({ message: 'Ошибка сервера' });
   }
 };

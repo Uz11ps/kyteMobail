@@ -3,6 +3,8 @@ class ApiEndpoints {
   static const String login = '/auth/login';
   static const String register = '/auth/register';
   static const String refreshToken = '/auth/refresh';
+  static const String sendPhoneCode = '/auth/phone/send-code';
+  static const String verifyPhoneCode = '/auth/phone/verify-code';
   
   // Chats
   static const String chats = '/chats';

@@ -1,6 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import '../../../data/models/user_model.dart';
 
@@ -15,6 +14,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoginRequested>(_onAuthLoginRequested);
     on<AuthRegisterRequested>(_onAuthRegisterRequested);
     on<AuthGoogleLoginRequested>(_onAuthGoogleLoginRequested);
+    on<AuthPhoneCodeSendRequested>(_onAuthPhoneCodeSendRequested);
+    on<AuthPhoneRegisterRequested>(_onAuthPhoneRegisterRequested);
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
   }
 
@@ -96,25 +97,47 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
       emit(AuthAuthenticated(user: user));
     } catch (e) {
-      String errorMessage = 'Ошибка входа через Google';
-      try {
-        if (e != null) {
-          try {
-            final errorStr = e.toString();
-            if (errorStr.isNotEmpty && errorStr != 'null') {
-              errorMessage = errorStr;
-              if (errorMessage.startsWith('Exception: ')) {
-                errorMessage = errorMessage.substring(11);
-              }
-            }
-          } catch (toStringError) {
-            // Если toString() сам выбрасывает ошибку, используем сообщение по умолчанию
-            debugPrint('❌ Ошибка при вызове toString() в AuthBloc: $toStringError');
-          }
-        }
-      } catch (parseError) {
-        // Если проверка e != null выбрасывает ошибку, используем сообщение по умолчанию
-        debugPrint('❌ Ошибка при проверке ошибки в AuthBloc: $parseError');
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      emit(AuthError(message: errorMessage));
+    }
+  }
+
+  Future<void> _onAuthPhoneCodeSendRequested(
+    AuthPhoneCodeSendRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      await authRepository.sendPhoneVerificationCode(event.phone);
+      emit(AuthPhoneCodeSent());
+    } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      emit(AuthError(message: errorMessage));
+    }
+  }
+
+  Future<void> _onAuthPhoneRegisterRequested(
+    AuthPhoneRegisterRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final user = await authRepository.registerWithPhone(
+        event.phone,
+        event.code,
+        name: event.name,
+      );
+      emit(AuthAuthenticated(user: user));
+    } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
       }
       emit(AuthError(message: errorMessage));
     }
@@ -129,24 +152,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await authRepository.logout();
       emit(AuthUnauthenticated());
     } catch (e) {
-      String errorMessage = 'Ошибка выхода';
-      try {
-        if (e != null) {
-          try {
-            final errorStr = e.toString();
-            if (errorStr.isNotEmpty && errorStr != 'null') {
-              errorMessage = errorStr;
-            }
-          } catch (toStringError) {
-            // Если toString() сам выбрасывает ошибку, используем сообщение по умолчанию
-            debugPrint('❌ Ошибка при вызове toString() в logout: $toStringError');
-          }
-        }
-      } catch (parseError) {
-        // Если проверка e != null выбрасывает ошибку, используем сообщение по умолчанию
-        debugPrint('❌ Ошибка при проверке ошибки в logout: $parseError');
-      }
-      emit(AuthError(message: errorMessage));
+      emit(AuthError(message: e.toString()));
     }
   }
 }

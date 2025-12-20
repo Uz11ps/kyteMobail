@@ -108,21 +108,124 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<UserModel> loginWithPhone(String phone, String code) async {
     try {
       final response = await _dio.post(
-        ApiEndpoints.login,
+        ApiEndpoints.verifyPhoneCode,
         data: {
           'phone': phone,
           'code': code,
         },
       );
 
-      final user = UserModel.fromJson(response.data['user']);
-      await _storage.write(StorageKeys.accessToken, response.data['accessToken'].toString());
-      await _storage.write(StorageKeys.refreshToken, response.data['refreshToken'].toString());
+      if (response.data == null || response.data['user'] == null) {
+        throw Exception('Неполные данные ответа сервера');
+      }
+
+      final userData = response.data['user'];
+      final newAccessToken = response.data['accessToken'];
+      final newRefreshToken = response.data['refreshToken'];
+
+      final user = UserModel.fromJson(userData);
+
+      await _storage.write(StorageKeys.accessToken, newAccessToken.toString());
+      await _storage.write(StorageKeys.refreshToken, newRefreshToken.toString());
       await _storage.write(StorageKeys.userId, user.id);
+      await _storage.write(StorageKeys.userEmail, user.email);
+      if (user.name != null) {
+        await _storage.write(StorageKeys.userName, user.name!);
+      }
 
       return user;
     } on DioException catch (e) {
-      throw Exception(e.response?.data['message'] ?? 'Ошибка входа');
+      throw Exception(
+        _extractErrorMessage(e.response?.data, 'Ошибка входа по телефону'),
+      );
+    } catch (e) {
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          errorMessage = e.toString();
+        }
+      } catch (_) {
+        errorMessage = 'Ошибка входа по телефону';
+      }
+      throw Exception('Ошибка входа по телефону: $errorMessage');
+    }
+  }
+
+  @override
+  Future<void> sendPhoneVerificationCode(String phone) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.sendPhoneCode,
+        data: {
+          'phone': phone,
+        },
+      );
+
+      if (response.data == null || !response.data['success']) {
+        throw Exception(response.data?['message'] ?? 'Ошибка отправки кода');
+      }
+    } on DioException catch (e) {
+      throw Exception(
+        _extractErrorMessage(e.response?.data, 'Ошибка отправки SMS кода'),
+      );
+    } catch (e) {
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          errorMessage = e.toString();
+        }
+      } catch (_) {
+        errorMessage = 'Ошибка отправки SMS кода';
+      }
+      throw Exception('Ошибка отправки SMS кода: $errorMessage');
+    }
+  }
+
+  @override
+  Future<UserModel> registerWithPhone(String phone, String code, {String? name}) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.verifyPhoneCode,
+        data: {
+          'phone': phone,
+          'code': code,
+          if (name != null) 'name': name,
+        },
+      );
+
+      if (response.data == null || response.data['user'] == null) {
+        throw Exception('Неполные данные ответа сервера при регистрации по телефону');
+      }
+
+      final userData = response.data['user'];
+      final newAccessToken = response.data['accessToken'];
+      final newRefreshToken = response.data['refreshToken'];
+
+      final user = UserModel.fromJson(userData);
+
+      await _storage.write(StorageKeys.accessToken, newAccessToken.toString());
+      await _storage.write(StorageKeys.refreshToken, newRefreshToken.toString());
+      await _storage.write(StorageKeys.userId, user.id);
+      await _storage.write(StorageKeys.userEmail, user.email);
+      if (user.name != null) {
+        await _storage.write(StorageKeys.userName, user.name!);
+      }
+
+      return user;
+    } on DioException catch (e) {
+      throw Exception(
+        _extractErrorMessage(e.response?.data, 'Ошибка регистрации по телефону'),
+      );
+    } catch (e) {
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          errorMessage = e.toString();
+        }
+      } catch (_) {
+        errorMessage = 'Ошибка регистрации по телефону';
+      }
+      throw Exception('Ошибка регистрации по телефону: $errorMessage');
     }
   }
 

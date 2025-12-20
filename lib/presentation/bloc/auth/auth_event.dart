@@ -60,3 +60,27 @@ class AuthGoogleLoginRequested extends AuthEvent {
   List<Object> get props => [idToken, accessToken, email, name, picture ?? '', googleId ?? ''];
 }
 
+class AuthPhoneCodeSendRequested extends AuthEvent {
+  final String phone;
+
+  const AuthPhoneCodeSendRequested({required this.phone});
+
+  @override
+  List<Object> get props => [phone];
+}
+
+class AuthPhoneRegisterRequested extends AuthEvent {
+  final String phone;
+  final String code;
+  final String? name;
+
+  const AuthPhoneRegisterRequested({
+    required this.phone,
+    required this.code,
+    this.name,
+  });
+
+  @override
+  List<Object> get props => [phone, code, name ?? ''];
+}
+
