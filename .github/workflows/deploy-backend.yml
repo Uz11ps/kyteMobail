@@ -46,14 +46,18 @@ jobs:
           
           # Выполняем деплой на сервере
           echo "🔧 Выполняем деплой..."
-          ssh -i ~/.ssh/deploy_key ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
+          ssh -i ~/.ssh/deploy_key -o ServerAliveInterval=60 -o ServerAliveCountMax=3 ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
+            set -e  # Остановить при ошибке
             # Переменные окружения
             DEPLOY_DIR=$(ls -td /tmp/kyte-deploy-* | head -1)
             APP_DIR="/var/www/kyte-backend/backend"
             
             echo "📦 Устанавливаем зависимости..."
             cd ${DEPLOY_DIR}
-            npm install --production --no-audit --no-fund
+            npm install --production --no-audit --no-fund --loglevel=error || {
+              echo "❌ Ошибка установки зависимостей"
+              exit 1
+            }
             
             echo "🔄 Обновляем приложение..."
             # Создаем backup
@@ -86,10 +90,20 @@ jobs:
             
             echo "🚀 Запускаем приложение..."
             cd ${APP_DIR}
-            sudo pm2 restart kyte-backend || sudo pm2 start src/server.js --name kyte-backend
+            
+            # Останавливаем все процессы node на порту 3000
+            sudo killall node || true
+            sleep 2
+            
+            # Запускаем через PM2
+            sudo pm2 delete kyte-backend || true
+            sudo pm2 start src/server.js --name kyte-backend --update-env || {
+              echo "❌ Ошибка запуска приложения"
+              exit 1
+            }
             
             echo "💾 Сохраняем конфигурацию PM2..."
-            sudo pm2 save
+            sudo pm2 save || true
             
             echo "🧹 Очищаем старые деплои (оставляем последние 3)"
             ls -td /tmp/kyte-deploy-* | tail -n +4 | xargs rm -rf || true
@@ -104,11 +118,14 @@ jobs:
           SERVER_USER: ${{ secrets.SERVER_USER }}
           SERVER_HOST: ${{ secrets.SERVER_HOST }}
         run: |
-          ssh -i ~/.ssh/deploy_key ${SERVER_USER}@${SERVER_HOST} "
+          ssh -i ~/.ssh/deploy_key -o ServerAliveInterval=60 ${SERVER_USER}@${SERVER_HOST} "
             echo '📊 Статус приложения:'
             sudo pm2 status kyte-backend || echo 'Приложение не запущено'
             echo ''
             echo '📝 Последние логи:'
             sudo pm2 logs kyte-backend --lines 10 --nostream || echo 'Логи недоступны'
+            echo ''
+            echo '🔍 Проверка SMS провайдера:'
+            sudo pm2 logs kyte-backend --lines 50 --nostream | grep -i 'sms\|aws' | tail -5 || echo 'Логи SMS недоступны'
           "
 
