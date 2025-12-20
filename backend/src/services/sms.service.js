@@ -203,5 +203,13 @@ class SMSService {
   }
 }
 
-export const smsService = new SMSService();
+// Ленивая инициализация для правильной загрузки переменных окружения
+let _smsServiceInstance = null;
+
+export const smsService = (() => {
+  if (!_smsServiceInstance) {
+    _smsServiceInstance = new SMSService();
+  }
+  return _smsServiceInstance;
+})();
 

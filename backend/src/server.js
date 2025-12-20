@@ -1,9 +1,12 @@
+// ВАЖНО: dotenv.config() должен быть ПЕРВЫМ, до всех импортов которые используют process.env
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import cors from 'cors';
 import helmet from 'helmet';
-import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,8 +15,6 @@ import { setupRoutes } from './routes/index.js';
 import { setupSocketIO } from './socket/socket.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { connectDatabase } from './config/database.js';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
