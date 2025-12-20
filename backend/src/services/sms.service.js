@@ -14,12 +14,15 @@ class SMSService {
     switch (this.provider) {
       case 'twilio':
         this.sendSMS = this.sendViaTwilio;
+        console.log('📱 SMS Service: Используется Twilio для отправки SMS.');
         break;
       case 'aws':
         this.sendSMS = this.sendViaAWS;
+        console.log('📱 SMS Service: Используется AWS SNS для отправки SMS.');
         break;
       case 'smsru':
         this.sendSMS = this.sendViaSmsRu;
+        console.log('📱 SMS Service: Используется Sms.ru для отправки SMS.');
         break;
       case 'mock':
       default:
@@ -206,10 +209,20 @@ class SMSService {
 // Ленивая инициализация для правильной загрузки переменных окружения
 let _smsServiceInstance = null;
 
-export const smsService = (() => {
-  if (!_smsServiceInstance) {
-    _smsServiceInstance = new SMSService();
-  }
-  return _smsServiceInstance;
-})();
+// Используем геттер вместо IIFE для ленивой инициализации
+export const smsService = {
+  get instance() {
+    if (!_smsServiceInstance) {
+      _smsServiceInstance = new SMSService();
+    }
+    return _smsServiceInstance;
+  },
+  // Проксируем методы для удобства использования
+  sendVerificationCode(phone, code) {
+    return this.instance.sendVerificationCode(phone, code);
+  },
+  validatePhone(phone) {
+    return this.instance.validatePhone(phone);
+  },
+};
 
