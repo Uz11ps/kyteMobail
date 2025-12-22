@@ -133,3 +133,5 @@ adb install build\app\outputs\flutter-apk\app-debug.apk
 2. Откройте на телефоне
 3. Скачайте и установите
 
+
+

@@ -116,3 +116,5 @@ scp -r -i $sshKey build\web\* kyte-777@94.131.80.213:/var/www/kyte-mobile/web/
 - http://94.131.80.213/mobail/login - вход
 - http://94.131.80.213/mobail/register - регистрация
 
+
+

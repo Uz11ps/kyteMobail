@@ -5,3 +5,5 @@ Future<void> initializeFirebase() async {
   debugPrint('ℹ️  Firebase инициализация пропущена для веб-платформы');
 }
 
+
+

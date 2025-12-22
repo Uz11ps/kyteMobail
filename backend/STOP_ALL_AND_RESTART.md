@@ -72,3 +72,5 @@ pm2 logs kyte-backend --lines 50 --nostream | grep -i "aws\|sms\|messageid\|✅"
 pm2 logs kyte-backend --lines 200 --nostream | grep -A 3 "MOCK SMS\|код подтверждения"
 ```
 
+
+

@@ -46,3 +46,5 @@ Write-Host "   • Скопируйте APK файл на телефон" -Foreg
 Write-Host "   • Откройте файловый менеджер на телефоне" -ForegroundColor Gray
 Write-Host "   • Найдите APK и установите его" -ForegroundColor Gray
 
+
+

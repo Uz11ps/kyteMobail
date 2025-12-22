@@ -93,3 +93,5 @@ sudo chown -R kyte-777:kyte-777 /var/www/kyte-mobile
 3. Проверьте что публичный ключ добавлен на сервер
 4. Проверьте права доступа к директории `/var/www/kyte-mobile/web/`
 
+
+

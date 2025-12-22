@@ -56,3 +56,5 @@ Write-Host "4. Настройте Nginx (см. DEPLOY_WEB_APP.md)" -ForegroundCo
 Write-Host ""
 Write-Host "5. Откройте в браузере: http://94.131.80.213/mobail/" -ForegroundColor Green
 
+
+

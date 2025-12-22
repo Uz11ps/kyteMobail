@@ -80,3 +80,5 @@ if ($LASTEXITCODE -eq 0) {
     Write-Host "И выполните команды из файла UPDATE_CORS_ENV.md" -ForegroundColor Yellow
 }
 
+
+

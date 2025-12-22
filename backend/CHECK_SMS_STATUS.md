@@ -96,3 +96,5 @@ curl -X POST http://94.131.80.213/api/auth/phone/verify-code \
 ❌ Ошибка отправки SMS через AWS SNS: ...
 ```
 
+
+

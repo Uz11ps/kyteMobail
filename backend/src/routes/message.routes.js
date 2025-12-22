@@ -9,3 +9,5 @@ router.post('/chats/:chatId/read', authenticateToken, markAsRead);
 
 export default router;
 
+
+

@@ -120,3 +120,5 @@ if ($choice -eq "1") {
     Write-Host "❌ Неверный выбор" -ForegroundColor Red
 }
 
+
+

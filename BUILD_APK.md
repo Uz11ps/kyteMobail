@@ -125,3 +125,5 @@ sdk.dir=C:\\Users\\YourUsername\\AppData\\Local\\Android\\Sdk
 3. Протестируйте основные функции
 4. Проверьте работу WebSocket соединения
 
+
+

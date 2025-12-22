@@ -52,3 +52,5 @@ export const getFileType = (mimeType, filename) => {
   return 'other';
 };
 
+
+

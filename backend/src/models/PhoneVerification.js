@@ -65,3 +65,5 @@ phoneVerificationSchema.statics.generateCode = function() {
 
 export const PhoneVerification = mongoose.model('PhoneVerification', phoneVerificationSchema);
 
+
+
