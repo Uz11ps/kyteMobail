@@ -202,11 +202,24 @@ class SMSService {
       console.log('📋 SMS.ru ответ:', JSON.stringify(response.data, null, 2));
 
       if (response.data.status === 'OK') {
-        const smsId = response.data.sms && response.data.sms[phoneWithoutPlus] 
-          ? response.data.sms[phoneWithoutPlus].sms_id 
-          : null;
-        console.log(`✅ SMS отправлено через SMS.ru. SMS ID: ${smsId}, Phone: ${phone}`);
-        return { success: true, smsId };
+        // Проверяем статус конкретного SMS
+        const smsData = response.data.sms && response.data.sms[phoneWithoutPlus];
+        if (smsData) {
+          if (smsData.status === 'OK' || smsData.status_code === 100) {
+            const smsId = smsData.sms_id || null;
+            console.log(`✅ SMS отправлено через SMS.ru. SMS ID: ${smsId}, Phone: ${phone}`);
+            return { success: true, smsId };
+          } else {
+            // Ошибка для конкретного номера
+            const errorText = smsData.status_text || `Ошибка отправки SMS (код: ${smsData.status_code})`;
+            console.error('❌ SMS.ru ошибка для номера:', errorText);
+            throw new Error(errorText);
+          }
+        } else {
+          // Если нет данных о конкретном SMS, но общий статус OK
+          console.log(`✅ SMS отправлено через SMS.ru. Phone: ${phone}`);
+          return { success: true };
+        }
       } else {
         const errorText = response.data.status_text || 'Ошибка отправки SMS';
         console.error('❌ SMS.ru ошибка:', errorText);
