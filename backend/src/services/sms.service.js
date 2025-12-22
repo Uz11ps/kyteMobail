@@ -11,6 +11,7 @@ class SMSService {
     console.log('🔍 SMSService constructor: AWS_ACCESS_KEY_ID =', process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET');
     console.log('🔍 SMSService constructor: AWS_SECRET_ACCESS_KEY =', process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET');
     console.log('🔍 SMSService constructor: AWS_REGION =', process.env.AWS_REGION);
+    console.log('🔍 SMSService constructor: SMSRU_API_ID =', process.env.SMSRU_API_ID ? 'SET' : 'NOT SET');
     
     this.provider = process.env.SMS_PROVIDER || 'mock'; // mock, twilio, aws, smsru
     this.initProvider();
@@ -159,30 +160,64 @@ class SMSService {
 
   /**
    * Отправка через Sms.ru
+   * SMS.ru требует номер телефона без знака +, только цифры (формат: 79991234567)
    */
   async sendViaSmsRu(phone, message) {
+    console.log('📤 Отправка SMS через SMS.ru на номер:', phone);
+    
     // Динамический импорт для ES modules
     const axiosModule = await import('axios');
     const axios = axiosModule.default || axiosModule;
     const apiId = process.env.SMSRU_API_ID;
 
     if (!apiId) {
+      console.error('❌ SMS.ru API ID не настроен');
       throw new Error('SMS.ru API ID не настроен');
     }
 
-    const response = await axios.post('https://sms.ru/sms/send', null, {
-      params: {
-        api_id: apiId,
-        to: phone,
-        msg: message,
-        json: 1,
-      },
-    });
+    // SMS.ru требует номер без знака +, только цифры
+    // Преобразуем +79991234567 в 79991234567
+    const phoneWithoutPlus = phone.replace(/^\+/, '');
+    
+    console.log('🔍 SMS.ru: Номер для отправки:', phoneWithoutPlus);
+    console.log('🔍 SMS.ru: Сообщение:', message);
 
-    if (response.data.status === 'OK') {
-      return { success: true, smsId: response.data.sms[phone] };
-    } else {
-      throw new Error(response.data.status_text || 'Ошибка отправки SMS');
+    try {
+      const response = await axios.post('https://sms.ru/sms/send', null, {
+        params: {
+          api_id: apiId,
+          to: phoneWithoutPlus,
+          msg: message,
+          json: 1,
+        },
+      });
+
+      console.log('📋 SMS.ru ответ:', JSON.stringify(response.data, null, 2));
+
+      if (response.data.status === 'OK') {
+        const smsId = response.data.sms && response.data.sms[phoneWithoutPlus] 
+          ? response.data.sms[phoneWithoutPlus].sms_id 
+          : null;
+        console.log(`✅ SMS отправлено через SMS.ru. SMS ID: ${smsId}, Phone: ${phone}`);
+        return { success: true, smsId };
+      } else {
+        const errorText = response.data.status_text || 'Ошибка отправки SMS';
+        console.error('❌ SMS.ru ошибка:', errorText);
+        throw new Error(errorText);
+      }
+    } catch (error) {
+      console.error('❌ Ошибка отправки SMS через SMS.ru:');
+      console.error('   Сообщение:', error.message);
+      if (error.response) {
+        console.error('   Статус:', error.response.status);
+        console.error('   Данные:', JSON.stringify(error.response.data, null, 2));
+      }
+      
+      if (error.response && error.response.data) {
+        const errorText = error.response.data.status_text || error.message;
+        throw new Error(`Ошибка SMS.ru: ${errorText}`);
+      }
+      throw new Error(`Ошибка SMS.ru: ${error.message || 'Неизвестная ошибка'}`);
     }
   }
 
