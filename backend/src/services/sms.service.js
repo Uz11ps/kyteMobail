@@ -47,10 +47,17 @@ class SMSService {
    */
   async sendVerificationCode(phone, code) {
     try {
+      console.log('📱 sendVerificationCode вызван для номера:', phone);
+      console.log('📱 Текущий провайдер:', this.provider);
+      console.log('📱 SMS_PROVIDER из env:', process.env.SMS_PROVIDER);
       const message = `Ваш код подтверждения: ${code}. Не сообщайте его никому.`;
-      return await this.sendSMS(phone, message);
+      console.log('📱 Вызов sendSMS...');
+      const result = await this.sendSMS(phone, message);
+      console.log('📱 Результат sendSMS:', result);
+      return result;
     } catch (error) {
-      console.error('Ошибка отправки SMS:', error);
+      console.error('❌ Ошибка отправки SMS:', error);
+      console.error('❌ Stack:', error.stack);
       return { success: false, message: 'Ошибка отправки SMS' };
     }
   }
@@ -274,6 +281,12 @@ export const smsService = {
   },
   // Проксируем методы для удобства использования
   sendVerificationCode(phone, code) {
+    // Логируем при первом использовании
+    if (!_smsServiceInstance) {
+      console.log('🔍 Первое использование SMS сервиса');
+      console.log('🔍 SMS_PROVIDER:', process.env.SMS_PROVIDER);
+      console.log('🔍 SMSRU_API_ID:', process.env.SMSRU_API_ID ? 'SET' : 'NOT SET');
+    }
     return this.instance.sendVerificationCode(phone, code);
   },
   validatePhone(phone) {
