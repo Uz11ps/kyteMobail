@@ -31,13 +31,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
         decoration: const BoxDecoration(
           color: Color(0xFF1D2631),
         ),
-        child: BlocListener<AuthBloc, AuthState>(
-        listener: (context, state) {
-          if (state is AuthUnauthenticated) {
-            Navigator.of(context).pushReplacementNamed(AppRouter.login);
-          }
-        },
-          child: SafeArea(
+        child: SafeArea(
             child: Column(
               children: [
                 _ChatsHeader(
