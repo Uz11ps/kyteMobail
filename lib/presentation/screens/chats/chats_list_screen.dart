@@ -6,6 +6,8 @@ import '../../bloc/chat/chat_bloc.dart';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../../core/routing/app_router.dart';
 import '../../../data/models/chat_model.dart';
+import '../../widgets/ai_chat_popup.dart';
+import '../../widgets/new_project_bottom_sheet.dart';
 
 class ChatsListScreen extends StatefulWidget {
   const ChatsListScreen({super.key});
@@ -23,19 +25,45 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
     context.read<ChatBloc>().add(ChatsLoadRequested());
   }
 
+  void _showAIChatPopup() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const AIChatPopup(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF1D2631),
+      floatingActionButton: _AIChatFloatingButton(
+        onPressed: _showAIChatPopup,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
       body: Container(
         decoration: const BoxDecoration(
           color: Color(0xFF1D2631),
         ),
-        child: SafeArea(
+        child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          if (state is AuthUnauthenticated) {
+            Navigator.of(context).pushReplacementNamed(AppRouter.login);
+          }
+        },
+          child: SafeArea(
             child: Column(
               children: [
                 _ChatsHeader(
-                  onCreate: () => Navigator.of(context).pushNamed(AppRouter.groupCreate),
+                  onCreate: () {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.transparent,
+                      builder: (context) => const NewProjectBottomSheet(),
+                    );
+                  },
                   onProfile: () => Navigator.of(context).pushNamed(AppRouter.profile),
                 ),
                 Expanded(
@@ -91,10 +119,24 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
                           },
                           child: ListView.separated(
                             padding: const EdgeInsets.fromLTRB(16, 6, 16, 18),
-                            itemCount: state.chats.length,
+                            itemCount: state.chats.length + 1, // +1 для карточки создания
                             separatorBuilder: (_, __) => const SizedBox(height: 14),
                             itemBuilder: (context, index) {
-                              final chat = state.chats[index];
+                              // Первая карточка - создание нового чата
+                              if (index == 0) {
+                                return _CreateChatCard(
+                                  onCreate: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (context) => const NewProjectBottomSheet(),
+                                    );
+                                  },
+                                );
+                              }
+                              // Остальные - обычные чаты
+                              final chat = state.chats[index - 1];
                               return _ChatCard(chat: chat);
                             },
                           ),
@@ -659,6 +701,67 @@ class _GlassCircle extends StatelessWidget {
   }
 }
 
+class _CreateChatCard extends StatelessWidget {
+  final VoidCallback onCreate;
+
+  const _CreateChatCard({
+    required this.onCreate,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 370,
+      height: 140,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onCreate,
+          borderRadius: BorderRadius.circular(20),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: const Color(0xFF161B22),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.22),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withOpacity(0.06),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      'Создайте свой первый чат',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ChatCard extends StatelessWidget {
   final ChatModel chat;
 
@@ -678,161 +781,173 @@ class _ChatCard extends StatelessWidget {
     final author = _previewAuthor(chat);
     final previewText = (lastMessage == null || lastMessage.isEmpty) ? 'Нет сообщений' : lastMessage;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          Navigator.of(context).pushNamed(
-            AppRouter.chat,
-            arguments: {
-              'chatId': chat.id,
-              'chatName': chat.name,
-            },
-          );
-        },
-        borderRadius: BorderRadius.circular(20),
-        child: Ink(
-          decoration: BoxDecoration(
-            color: const Color(0xFF161B22),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.22),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+    return SizedBox(
+      width: 370,
+      height: 140,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            Navigator.of(context).pushNamed(
+              AppRouter.chat,
+              arguments: {
+                'chatId': chat.id,
+                'chatName': chat.name,
+              },
+            );
+          },
+          borderRadius: BorderRadius.circular(20),
+          child: Ink(
+            decoration: BoxDecoration(
+              color: const Color(0xFF161B22),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.22),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+              border: Border.all(
+                color: Colors.white.withOpacity(0.06),
               ),
-            ],
-            border: Border.all(
-              color: Colors.white.withOpacity(0.06),
             ),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              clipBehavior: Clip.hardEdge,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _ChatAvatar(chat: chat),
-                    const SizedBox(width: 16), // Увеличен отступ между аватаром и названием
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            chat.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                          ),
-                          const SizedBox(height: 10), // Увеличен отступ между названием и иконками
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start, // Выравнивание по верхнему краю
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _ChatAvatar(chat: chat),
+                        const SizedBox(width: 16), // Увеличен отступ между аватаром и названием
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _MetaBadgeStat(
-                                svg: _chatStatSvgChat,
-                                value: messageCount.toString(),
+                              Text(
+                                chat.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                               ),
-                              const SizedBox(width: 24),
-                              _MetaBadgeStat(
-                                svg: _chatStatSvgHeart,
-                                value: favCount.toString(),
-                              ),
-                              const SizedBox(width: 24),
-                              _MetaBadgeStat(
-                                svg: _chatStatSvgCalendar,
-                                value: calendarCount.toString(),
+                              const SizedBox(height: 10), // Увеличен отступ между названием и иконками
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.start, // Выравнивание по верхнему краю
+                                children: [
+                                  _MetaBadgeStat(
+                                    svg: _chatStatSvgChat,
+                                    value: messageCount.toString(),
+                                  ),
+                                  const SizedBox(width: 24),
+                                  _MetaBadgeStat(
+                                    svg: _chatStatSvgHeart,
+                                    value: favCount.toString(),
+                                  ),
+                                  const SizedBox(width: 24),
+                                  _MetaBadgeStat(
+                                    svg: _chatStatSvgCalendar,
+                                    value: calendarCount.toString(),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                        ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14), // Увеличен отступ между иконками и последним сообщением
+                    Flexible(
+                      child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1B2330).withOpacity(0.75),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.06),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 14), // Увеличен отступ между иконками и последним сообщением
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1B2330).withOpacity(0.75),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.06),
-                    ),
-                  ),
-                  child: author.isEmpty
-                      ? Row(
-                          children: [
-                            Expanded(
-                              child: Text(
+                    child: author.isEmpty
+                        ? Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  previewText,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: Colors.white.withOpacity(0.80),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                              ),
+                              if (time.isNotEmpty) ...[
+                                const SizedBox(width: 12),
+                                Text(
+                                  time,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: Colors.white.withOpacity(0.60),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                ),
+                              ],
+                            ],
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      author,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                            color: const Color(0xFF4CAF50),
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                    ),
+                                  ),
+                                  if (time.isNotEmpty) ...[
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      time,
+                                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: Colors.white.withOpacity(0.60),
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
                                 previewText,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Colors.white.withOpacity(0.80),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                            ),
-                            if (time.isNotEmpty) ...[
-                              const SizedBox(width: 12),
-                              Text(
-                                time,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: Colors.white.withOpacity(0.60),
+                                      color: Colors.white.withOpacity(0.82),
                                       fontWeight: FontWeight.w500,
                                     ),
                               ),
                             ],
-                          ],
-                        )
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    author,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: const Color(0xFF4CAF50),
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                  ),
-                                ),
-                                if (time.isNotEmpty) ...[
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    time,
-                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Colors.white.withOpacity(0.60),
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              previewText,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Colors.white.withOpacity(0.82),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                            ),
-                          ],
-                        ),
+                          ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         ),
@@ -1060,6 +1175,42 @@ class _ChatAvatar extends StatelessWidget {
       [const Color(0xFFFFB75E), const Color(0xFFED8F03)],
     ];
     return palette[seed % palette.length];
+  }
+}
+
+const String _inputIconHeart = '''
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M22 9.5L12.0025 19.5L12 19.4975L11.9975 19.5L2 9.5L6.99877 4.5L12 9.50247L17.0012 4.5L22 9.5Z" stroke="#D6DBE2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+''';
+
+class _AIChatFloatingButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _AIChatFloatingButton({
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(left: 16, bottom: 16),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(999),
+          child: _GlassCircle(
+            size: 48,
+            child: SvgPicture.string(
+              _inputIconHeart,
+              width: 20,
+              height: 20,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

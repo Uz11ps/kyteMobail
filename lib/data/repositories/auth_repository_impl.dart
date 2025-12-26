@@ -549,5 +549,124 @@ class AuthRepositoryImpl implements AuthRepository {
       return false;
     }
   }
+
+  @override
+  Future<UserModel> loginAsGuest() async {
+    try {
+      print('👤 Attempting guest login');
+      
+      final response = await _dio.post(
+        ApiEndpoints.guestLogin,
+      );
+
+      print('✅ Guest login successful, response: ${response.data}');
+
+      if (response.data == null) {
+        throw Exception('Пустой ответ от сервера');
+      }
+
+      final userData = response.data['user'];
+      final accessToken = response.data['accessToken'];
+      final refreshToken = response.data['refreshToken'];
+
+      if (userData == null) {
+        throw Exception('Данные пользователя не получены');
+      }
+      if (accessToken == null || accessToken.toString().isEmpty) {
+        throw Exception('Токен доступа не получен');
+      }
+      if (refreshToken == null || refreshToken.toString().isEmpty) {
+        throw Exception('Токен обновления не получен');
+      }
+
+      final user = UserModel.fromJson(userData);
+      
+      await _storage.write(StorageKeys.accessToken, accessToken.toString());
+      await _storage.write(StorageKeys.refreshToken, refreshToken.toString());
+      await _storage.write(StorageKeys.userId, user.id);
+      await _storage.write(StorageKeys.userEmail, user.email);
+
+      print('✅ Guest user data saved: id=${user.id}, email=${user.email}');
+      return user;
+    } on DioException catch (e) {
+      print('❌ Guest login error: ${e.type}');
+      print('   Status: ${e.response?.statusCode}');
+      print('   Data: ${e.response?.data}');
+      print('   Message: ${e.message}');
+      
+      // Если бэкенд недоступен, создаем локального гостевого пользователя
+      if (e.type == DioExceptionType.connectionTimeout || 
+          e.type == DioExceptionType.connectionError ||
+          e.response == null) {
+        print('⚠️  Backend недоступен, создаем локального гостевого пользователя');
+        return _createLocalGuestUser();
+      }
+      
+      String errorMessage = 'Ошибка гостевого входа';
+      
+      if (e.response != null) {
+        if (e.response!.data is Map) {
+          errorMessage = e.response!.data['message'] ?? 
+                        e.response!.data['error'] ?? 
+                        'Ошибка гостевого входа';
+        } else if (e.response!.data is String) {
+          errorMessage = e.response!.data;
+        }
+      }
+      
+      throw Exception(errorMessage);
+    } catch (e) {
+      print('❌ Unexpected guest login error: $e');
+      // Если произошла неизвестная ошибка, пробуем создать локального гостя
+      try {
+        print('⚠️  Пробуем создать локального гостевого пользователя');
+        return _createLocalGuestUser();
+      } catch (_) {
+        String errorMessage = 'Неизвестная ошибка';
+        try {
+          if (e != null) {
+            final errorStr = e.toString();
+            if (errorStr.isNotEmpty) {
+              errorMessage = errorStr;
+            }
+          }
+        } catch (_) {
+          // Используем сообщение по умолчанию
+        }
+        throw Exception('Ошибка подключения: $errorMessage');
+      }
+    }
+  }
+
+  /// Создает локального гостевого пользователя без обращения к серверу
+  Future<UserModel> _createLocalGuestUser() async {
+    print('👤 Creating local guest user');
+    
+    // Генерируем уникальный ID для гостя
+    final guestId = 'guest_${DateTime.now().millisecondsSinceEpoch}_${DateTime.now().microsecondsSinceEpoch}';
+    final guestEmail = '$guestId@guest.local';
+    
+    // Создаем временные токены (для демо-режима)
+    final tempAccessToken = 'guest_token_${DateTime.now().millisecondsSinceEpoch}';
+    final tempRefreshToken = 'guest_refresh_${DateTime.now().millisecondsSinceEpoch}';
+    
+    // Сохраняем данные
+    await _storage.write(StorageKeys.accessToken, tempAccessToken);
+    await _storage.write(StorageKeys.refreshToken, tempRefreshToken);
+    await _storage.write(StorageKeys.userId, guestId);
+    await _storage.write(StorageKeys.userEmail, guestEmail);
+    
+    // Создаем модель пользователя
+    final user = UserModel(
+      id: guestId,
+      email: guestEmail,
+      name: 'Гость',
+    );
+    
+    print('✅ Local guest user created: id=$guestId, email=$guestEmail');
+    print('⚠️  Работа в демо-режиме без бэкенда');
+    
+    return user;
+  }
 }
 

@@ -13,8 +13,8 @@ class ApiClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: _normalizeApiBaseUrl(AppConfig.apiBaseUrl),
-        connectTimeout: const Duration(seconds: 10), // Уменьшено для быстрой отладки
-        receiveTimeout: const Duration(seconds: 10), // Уменьшено для быстрой отладки
+        connectTimeout: const Duration(seconds: 30), // Увеличено для стабильности
+        receiveTimeout: const Duration(seconds: 30), // Увеличено для стабильности
         headers: {
           'Content-Type': 'application/json',
         },
@@ -24,9 +24,10 @@ class ApiClient {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Не добавляем токен для login и register запросов
+          // Не добавляем токен для login, register и guest запросов
           final isAuthRequest = options.path.contains('/auth/login') || 
-                                options.path.contains('/auth/register');
+                                options.path.contains('/auth/register') ||
+                                options.path.contains('/auth/guest');
           
           if (!isAuthRequest) {
             final token = await _storage.read(StorageKeys.accessToken);

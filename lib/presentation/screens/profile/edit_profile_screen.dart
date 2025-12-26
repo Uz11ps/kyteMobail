@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:file_picker/file_picker.dart';
 import 'dart:ui';
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html if (dart.library.io) 'package:kyte_mobile/core/utils/html_stub.dart';
 import 'dart:typed_data';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../data/models/user_model.dart';
 import '../../../core/di/service_locator.dart';
@@ -53,33 +56,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickAvatar() async {
-    final input = html.FileUploadInputElement()..accept = 'image/*';
-    input.click();
+    if (kIsWeb) {
+      final input = html.FileUploadInputElement()..accept = 'image/*';
+      input.click();
 
-    input.onChange.listen((e) async {
-      final files = input.files;
-      if (files != null && files.isNotEmpty) {
-        final file = files[0];
-        final reader = html.FileReader();
-        
-        reader.onLoadEnd.listen((e) async {
-          try {
-            setState(() => _isLoading = true);
-            final dio = ServiceLocator().apiClient.dio;
-            
-            // Получаем байты из FileReader (readAsArrayBuffer возвращает ByteBuffer из dart:typed_data)
-            final result = reader.result;
-            if (result == null) {
-              throw Exception('Не удалось прочитать файл');
-            }
-            
-            // Конвертируем ByteBuffer в List<int>
-            List<int> bytes;
-            if (result is ByteBuffer) {
-              bytes = result.asUint8List().toList();
-            } else {
-              throw Exception('Неподдерживаемый тип результата: ${result.runtimeType}');
-            }
+      input.onChange.listen((e) async {
+        final files = input.files;
+        if (files != null && files.isNotEmpty) {
+          final file = files[0];
+          final reader = html.FileReader();
+          
+          reader.onLoadEnd.listen((e) async {
+            try {
+              setState(() => _isLoading = true);
+              final dio = ServiceLocator().apiClient.dio;
+              
+              // Получаем байты из FileReader (readAsArrayBuffer возвращает ByteBuffer из dart:typed_data)
+              final result = reader.result;
+              if (result == null) {
+                throw Exception('Не удалось прочитать файл');
+              }
+              
+              // Конвертируем ByteBuffer в List<int>
+              List<int> bytes;
+              if (result is ByteBuffer) {
+                bytes = result.asUint8List().toList();
+              } else {
+                throw Exception('Неподдерживаемый тип результата: ${result.runtimeType}');
+              }
             
             // Определяем ContentType
             String? contentType;
@@ -153,15 +157,56 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         
         reader.onError.listen((e) {
           setState(() => _isLoading = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ошибка чтения файла')),
-          );
         });
         
-        // Читаем файл как массив байтов
-        reader.readAsArrayBuffer(file);
+        reader.readAsDataUrl(file);
+        }
+      });
+    } else {
+      // Мобильные и desktop платформы
+      try {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.image,
+          allowMultiple: false,
+        );
+        
+        if (result != null && result.files.single.path != null) {
+          setState(() => _isLoading = true);
+          final file = File(result.files.single.path!);
+          final dio = ServiceLocator().apiClient.dio;
+          
+          final formData = FormData.fromMap({
+            'avatar': await MultipartFile.fromFile(
+              file.path,
+              filename: file.path.split('/').last,
+            ),
+          });
+          
+          final response = await dio.post(
+            '/api/user/avatar',
+            data: formData,
+          );
+          
+          if (response.data != null && response.data['avatarUrl'] != null) {
+            setState(() {
+              _avatarUrl = response.data['avatarUrl'];
+              _isLoading = false;
+            });
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Аватар успешно загружен')),
+            );
+          } else {
+            throw Exception('URL аватара не получен');
+          }
+        }
+      } catch (e) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка загрузки аватара: $e')),
+        );
       }
-    });
+    }
   }
 
   Future<void> _selectBirthday() async {

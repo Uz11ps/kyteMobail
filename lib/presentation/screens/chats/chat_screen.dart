@@ -5,7 +5,8 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'dart:ui';
 import 'dart:io';
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html if (dart.library.io) 'package:kyte_mobile/core/utils/html_stub.dart';
 import 'dart:typed_data';
 import '../../bloc/chat/chat_bloc.dart';
 import '../../bloc/ai/ai_bloc.dart';
@@ -1214,12 +1215,7 @@ class _InputBarState extends State<_InputBar> {
     try {
       FilePickerResult? result;
       
-      if (Platform.isAndroid || Platform.isIOS) {
-        result = await FilePicker.platform.pickFiles(
-          type: FileType.any,
-          allowMultiple: false,
-        );
-      } else {
+      if (kIsWeb) {
         // Web платформа
         html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
         uploadInput.click();
@@ -1230,6 +1226,12 @@ class _InputBarState extends State<_InputBar> {
           await _uploadFileWeb(file);
           return;
         }
+      } else {
+        // Мобильные и desktop платформы
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          allowMultiple: false,
+        );
       }
 
       if (result != null && result.files.single.path != null) {
@@ -1744,12 +1746,7 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
     try {
       FilePickerResult? result;
       
-      if (Platform.isAndroid || Platform.isIOS) {
-        result = await FilePicker.platform.pickFiles(
-          type: FileType.any,
-          allowMultiple: false,
-        );
-      } else {
+      if (kIsWeb) {
         // Web платформа
         html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
         uploadInput.click();
@@ -1760,6 +1757,12 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
           await _uploadFileForAIWeb(file);
           return;
         }
+      } else {
+        // Мобильные и desktop платформы
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          allowMultiple: false,
+        );
       }
 
       if (result != null && result.files.single.path != null) {

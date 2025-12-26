@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../presentation/screens/splash_screen.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
+import '../../presentation/screens/auth/phone_login_screen.dart';
 import '../../presentation/screens/chats/chats_list_screen.dart';
 import '../../presentation/screens/chats/chat_screen.dart';
 import '../../presentation/screens/groups/group_create_screen.dart';
@@ -12,6 +13,7 @@ import '../../presentation/screens/profile/profile_screen.dart';
 class AppRouter {
   static const String splash = '/';
   static const String login = '/login';
+  static const String phoneLogin = '/phone-login';
   static const String register = '/register';
   static const String chats = '/chats';
   static const String chat = '/chat';
@@ -28,7 +30,11 @@ class AppRouter {
         );
       case login:
         return MaterialPageRoute(
-          builder: (_) => const LoginScreen(),
+          builder: (_) => const PhoneLoginScreen(),
+        );
+      case phoneLogin:
+        return MaterialPageRoute(
+          builder: (_) => const PhoneLoginScreen(),
         );
       case register:
         return MaterialPageRoute(

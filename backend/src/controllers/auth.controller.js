@@ -375,3 +375,42 @@ export const verifyPhoneCode = async (req, res) => {
   }
 };
 
+/**
+ * Гостевой вход - создание временного пользователя без регистрации
+ * POST /api/auth/guest
+ */
+export const guestLogin = async (req, res) => {
+  try {
+    // Генерируем уникальный временный email для гостя
+    const guestId = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    const guestEmail = `${guestId}@guest.kyte.me`;
+    
+    // Создаем нового гостевого пользователя
+    const user = new User({
+      email: guestEmail,
+      name: 'Гость',
+      // Пароль не требуется для гостевых пользователей
+    });
+
+    await user.save();
+
+    // Генерируем токены
+    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+
+    res.json({
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+        isGuest: true,
+      },
+      accessToken,
+      refreshToken,
+    });
+  } catch (error) {
+    console.error('Ошибка гостевого входа:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+

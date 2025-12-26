@@ -159,6 +159,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  void _handleGuestLogin() {
+    context.read<AuthBloc>().add(AuthGuestLoginRequested());
+  }
+
   Future<void> _handleGoogleSignIn() async {
     try {
       // Проверка доступности GoogleSignIn
@@ -609,6 +613,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      final isLoading = state is AuthLoading;
+                      return TextButton.icon(
+                        onPressed: isLoading ? null : _handleGuestLogin,
+                        icon: const Icon(Icons.person_outline),
+                        label: const Text('Войти как гость'),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 16),
                   TextButton(

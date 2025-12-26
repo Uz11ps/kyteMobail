@@ -21,7 +21,7 @@ class KyteApp extends StatelessWidget {
         BlocProvider(
           create: (_) => AuthBloc(
             authRepository: serviceLocator.authRepository,
-          ),
+          )..add(AuthCheckRequested()),
         ),
         BlocProvider(
           create: (_) => ChatBloc(
@@ -45,7 +45,7 @@ class KyteApp extends StatelessWidget {
         darkTheme: AppTheme.darkTheme,
         themeMode: ThemeMode.system,
         onGenerateRoute: AppRouter.generateRoute,
-        initialRoute: AppRouter.chats,
+        initialRoute: AppRouter.splash,
       ),
     );
   }

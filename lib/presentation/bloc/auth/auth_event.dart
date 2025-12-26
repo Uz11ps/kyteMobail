@@ -97,3 +97,5 @@ class AuthPhoneLoginRequested extends AuthEvent {
   List<Object> get props => [phone, code];
 }
 
+class AuthGuestLoginRequested extends AuthEvent {}
+

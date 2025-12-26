@@ -91,7 +91,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          Navigator.of(context).pushNamedAndRemoveUntil(
+            AppRouter.login,
+            (route) => false,
+          );
+        }
+      },
+      child: Scaffold(
         backgroundColor: const Color(0xFF1D2631),
         body: SafeArea(
           child: Column(
