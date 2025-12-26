@@ -12,8 +12,9 @@ class SMSService {
     console.log('🔍 SMSService constructor: AWS_SECRET_ACCESS_KEY =', process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET');
     console.log('🔍 SMSService constructor: AWS_REGION =', process.env.AWS_REGION);
     console.log('🔍 SMSService constructor: SMSRU_API_ID =', process.env.SMSRU_API_ID ? 'SET' : 'NOT SET');
+    console.log('🔍 SMSService constructor: TELEGRAM_GATEWAY_TOKEN =', process.env.TELEGRAM_GATEWAY_TOKEN ? 'SET' : 'NOT SET');
     
-    this.provider = process.env.SMS_PROVIDER || 'mock'; // mock, twilio, aws, smsru
+    this.provider = process.env.SMS_PROVIDER || 'mock'; // mock, twilio, aws, smsru, telegram
     this.initProvider();
   }
 
@@ -30,6 +31,10 @@ class SMSService {
       case 'smsru':
         this.sendSMS = this.sendViaSmsRu;
         console.log('📱 SMS Service: Используется Sms.ru для отправки SMS.');
+        break;
+      case 'telegram':
+        this.sendSMS = this.sendViaTelegram;
+        console.log('📱 SMS Service: Используется Telegram Gateway для верификации.');
         break;
       case 'mock':
       default:
@@ -52,7 +57,7 @@ class SMSService {
       console.log('📱 SMS_PROVIDER из env:', process.env.SMS_PROVIDER);
       const message = `Ваш код подтверждения: ${code}. Не сообщайте его никому.`;
       console.log('📱 Вызов sendSMS...');
-      const result = await this.sendSMS(phone, message);
+      const result = await this.sendSMS(phone, message, code);
       console.log('📱 Результат sendSMS:', result);
       return result;
     } catch (error) {
@@ -242,6 +247,66 @@ class SMSService {
   }
 
   /**
+   * Отправка через Telegram Gateway
+   * Документация: https://core.telegram.org/gateway/verification-tutorial
+   * @param {string} phone - Номер телефона в формате +79991234567
+   * @param {string} message - Текст сообщения (не используется Telegram Gateway напрямую, если передаем code)
+   * @param {string} code - Код подтверждения
+   */
+  async sendViaTelegram(phone, message, code) {
+    console.log('📤 Отправка кода через Telegram Gateway на номер:', phone);
+    
+    // Динамический импорт для ES modules
+    const axiosModule = await import('axios');
+    const axios = axiosModule.default || axiosModule;
+    const token = process.env.TELEGRAM_GATEWAY_TOKEN;
+
+    if (!token) {
+      console.error('❌ Telegram Gateway Token не настроен');
+      throw new Error('Telegram Gateway Token не настроен');
+    }
+
+    // Удаляем + из номера для Telegram Gateway
+    const phoneWithoutPlus = phone.replace(/^\+/, '');
+
+    try {
+      const response = await axios.post('https://gatewayapi.telegram.org/sendVerificationMessage', {
+        phone_number: phoneWithoutPlus,
+        code: code, // Используем наш сгенерированный код
+        ttl: 600,   // 10 минут
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('📋 Telegram Gateway ответ:', JSON.stringify(response.data, null, 2));
+
+      if (response.data.ok) {
+        console.log(`✅ Код отправлен через Telegram Gateway. Request ID: ${response.data.result.request_id}, Phone: ${phone}`);
+        return { 
+          success: true, 
+          requestId: response.data.result.request_id 
+        };
+      } else {
+        const errorText = response.data.error || 'Ошибка Telegram Gateway';
+        console.error('❌ Telegram Gateway ошибка:', errorText);
+        throw new Error(errorText);
+      }
+    } catch (error) {
+      console.error('❌ Ошибка Telegram Gateway:');
+      if (error.response?.data) {
+        console.error('   Данные:', JSON.stringify(error.response.data, null, 2));
+        const errorText = error.response.data.error || error.message;
+        throw new Error(`Telegram Gateway Error: ${errorText}`);
+      }
+      console.error('   Сообщение:', error.message);
+      throw new Error(`Telegram Gateway Error: ${error.message || 'Неизвестная ошибка'}`);
+    }
+  }
+
+  /**
    * Валидация номера телефона
    * Поддерживает Россию (+7) и Казахстан (+7)
    * @param {string} phone - Номер телефона
@@ -299,6 +364,7 @@ export const smsService = {
       console.log('🔍 Первое использование SMS сервиса');
       console.log('🔍 SMS_PROVIDER:', process.env.SMS_PROVIDER);
       console.log('🔍 SMSRU_API_ID:', process.env.SMSRU_API_ID ? 'SET' : 'NOT SET');
+      console.log('🔍 TELEGRAM_GATEWAY_TOKEN:', process.env.TELEGRAM_GATEWAY_TOKEN ? 'SET' : 'NOT SET');
     }
     return this.instance.sendVerificationCode(phone, code);
   },
