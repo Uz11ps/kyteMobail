@@ -26,6 +26,7 @@ const params = {
 
 console.log('📤 Отправка SMS на номер:', phoneNumber);
 
+
 console.log('📝 Сообщение:', message);
 
 sns.publish(params, (err, data) => {
