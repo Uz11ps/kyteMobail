@@ -27,6 +27,7 @@ class UserRepositoryImpl implements UserRepository {
     String? name,
     String? nickname,
     String? phone,
+    String? email,
     String? about,
     DateTime? birthday,
   }) async {
@@ -35,6 +36,7 @@ class UserRepositoryImpl implements UserRepository {
       if (name != null) data['name'] = name;
       if (nickname != null) data['nickname'] = nickname;
       if (phone != null) data['phone'] = phone;
+      if (email != null) data['email'] = email;
       if (about != null) data['about'] = about;
       if (birthday != null) data['birthday'] = birthday.toIso8601String();
 

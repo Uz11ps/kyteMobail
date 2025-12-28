@@ -47,12 +47,13 @@ export const getCurrentUser = async (req, res) => {
 export const updateProfile = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { name, nickname, phone, about, birthday } = req.body;
+    const { name, nickname, phone, email, about, birthday } = req.body;
 
     const updateData = {};
     if (name !== undefined) updateData.name = name;
     if (nickname !== undefined) updateData.nickname = nickname;
     if (phone !== undefined) updateData.phone = phone;
+    if (email !== undefined) updateData.email = email;
     if (about !== undefined) updateData.about = about;
     if (birthday !== undefined) {
       updateData.birthday = birthday ? new Date(birthday) : null;

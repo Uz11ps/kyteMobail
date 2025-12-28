@@ -25,6 +25,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _nicknameController;
   late TextEditingController _phoneController;
+  late TextEditingController _emailController;
   late TextEditingController _aboutController;
   late TextEditingController _birthdayController;
   DateTime? _birthday;
@@ -37,6 +38,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.user.name ?? '');
     _nicknameController = TextEditingController(text: widget.user.nickname ?? '');
     _phoneController = TextEditingController(text: widget.user.phone ?? '');
+    _emailController = TextEditingController(text: widget.user.email);
     _aboutController = TextEditingController(text: widget.user.about ?? '');
     _birthday = widget.user.birthday;
     _birthdayController = TextEditingController(
@@ -50,6 +52,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _nicknameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _aboutController.dispose();
     _birthdayController.dispose();
     super.dispose();
@@ -233,6 +236,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         name: _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
         nickname: _nicknameController.text.trim().isEmpty ? null : _nicknameController.text.trim(),
         phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+        email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
         about: _aboutController.text.trim().isEmpty ? null : _aboutController.text.trim(),
         birthday: _birthday,
       );
@@ -259,7 +263,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String _getInitials(String? name) {
     if (name == null || name.isEmpty) {
       final email = widget.user.email;
-      if (email.isNotEmpty) {
+      if (email != null && email.isNotEmpty) {
         return email[0].toUpperCase();
       }
       return 'U';
@@ -516,6 +520,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     _EditField(
                       label: 'Никнейм',
                       controller: _nicknameController,
+                    ),
+                    const SizedBox(height: 12),
+                    _EditField(
+                      label: 'Email',
+                      controller: _emailController,
+                      keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 12),
                     _EditField(

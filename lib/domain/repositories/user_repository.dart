@@ -6,6 +6,7 @@ abstract class UserRepository {
     String? name,
     String? nickname,
     String? phone,
+    String? email,
     String? about,
     DateTime? birthday,
   });

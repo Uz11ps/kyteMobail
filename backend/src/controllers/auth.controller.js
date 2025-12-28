@@ -346,8 +346,8 @@ export const verifyPhoneCode = async (req, res) => {
       user = new User({
         phone: normalizedPhone,
         name: name || null,
-        // Email не обязателен для регистрации по телефону
-        email: `phone_${normalizedPhone.replace(/[^\d]/g, '')}@temp.kyte.me`, // Временный email
+        // Email не обязателен для регистрации по телефону, оставляем пустым
+        email: null,
       });
       await user.save();
     }

@@ -5,7 +5,7 @@ part 'user_model.g.dart';
 @JsonSerializable()
 class UserModel {
   final String id;
-  final String email;
+  final String? email;
   final String? phone;
   final String? name;
   final String? nickname;
@@ -15,7 +15,7 @@ class UserModel {
 
   UserModel({
     required this.id,
-    required this.email,
+    this.email,
     this.phone,
     this.name,
     this.nickname,
@@ -42,15 +42,6 @@ class UserModel {
       final idValue = json['id'] ?? json['_id'];
       if (idValue == null || idValue.toString().isEmpty) {
         throw Exception('Поле "id" равно null или пустое в ответе сервера. Данные: $json');
-      }
-      
-      if (!json.containsKey('email')) {
-        throw Exception('Поле "email" отсутствует в ответе сервера. Данные: $json');
-      }
-      
-      final emailValue = json['email'];
-      if (emailValue == null || emailValue.toString().isEmpty) {
-        throw Exception('Поле "email" равно null или пустое в ответе сервера. Данные: $json');
       }
       
       return _$UserModelFromJson(json);
