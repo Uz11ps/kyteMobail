@@ -16,14 +16,14 @@
 
 ```powershell
 cd C:\Users\1\Documents\GitHub\kyteMobail
-scp -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" -r backend kyte-777@94.131.80.213:/tmp/
+scp -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" -r backend kyte-777@94.131.88.135:/tmp/
 ```
 
 ### 2. На сервере обновите файлы:
 
 ```bash
 # Подключитесь к серверу
-ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.80.213
+ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.88.135
 
 # Переместите файлы
 sudo rm -rf /var/www/kyte-backend/backend/*
@@ -61,7 +61,7 @@ sudo pm2 logs kyte-backend --lines 50
 
 Откройте в браузере:
 
-**http://94.131.80.213/admin**
+**http://94.131.88.135/admin**
 
 ### Учетные данные по умолчанию:
 

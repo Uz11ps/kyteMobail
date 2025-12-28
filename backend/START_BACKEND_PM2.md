@@ -61,7 +61,7 @@ pm2 env kyte-backend | grep -E "SMS|AWS"
 ### 5. Протестировать отправку SMS
 
 ```bash
-curl -X POST http://94.131.80.213/api/auth/phone/send-code \
+curl -X POST http://94.131.88.135/api/auth/phone/send-code \
   -H 'Content-Type: application/json' \
   -d '{"phone": "+79686288842"}'
 ```

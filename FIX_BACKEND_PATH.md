@@ -91,7 +91,7 @@ curl http://localhost/api/health
 
 ```powershell
 cd C:\Users\1\Documents\GitHub\kyteMobail
-scp -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" -r backend kyte-777@94.131.80.213:/tmp/
+scp -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" -r backend kyte-777@94.131.88.135:/tmp/
 ```
 
 Затем на сервере:

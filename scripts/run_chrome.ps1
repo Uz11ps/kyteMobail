@@ -47,7 +47,7 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Host ""
 Write-Host "🌐 Проверка доступности backend..." -ForegroundColor Yellow
-$backendUrl = "http://94.131.80.213:3000/api/health"
+$backendUrl = "http://94.131.88.135:3000/api/health"
 try {
     $response = Invoke-WebRequest -Uri $backendUrl -TimeoutSec 5 -UseBasicParsing -ErrorAction Stop
     Write-Host "✅ Backend доступен (статус: $($response.StatusCode))" -ForegroundColor Green
@@ -62,7 +62,7 @@ flutter devices
 
 Write-Host ""
 Write-Host "🚀 Запуск приложения в Chrome..." -ForegroundColor Green
-Write-Host "Backend URL: http://94.131.80.213:3000" -ForegroundColor Cyan
+Write-Host "Backend URL: http://94.131.88.135:3000" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "💡 Советы для отладки:" -ForegroundColor Yellow
 Write-Host "   1. Откройте DevTools (F12) → вкладка Network для просмотра запросов" -ForegroundColor Gray

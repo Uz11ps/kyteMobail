@@ -38,7 +38,7 @@ if (-not (Test-Path "build\web\index.html")) {
 Write-Host "📋 Следующие шаги:" -ForegroundColor Yellow
 Write-Host ""
 Write-Host "1. Подключитесь к серверу:" -ForegroundColor Cyan
-Write-Host "   ssh kyte-777@94.131.80.213" -ForegroundColor Gray
+Write-Host "   ssh kyte-777@94.131.88.135" -ForegroundColor Gray
 Write-Host ""
 Write-Host "2. Создайте директорию на сервере:" -ForegroundColor Cyan
 Write-Host "   sudo mkdir -p /var/www/kyte-mobile/web" -ForegroundColor Gray
@@ -47,14 +47,14 @@ Write-Host ""
 Write-Host "3. Загрузите файлы (выберите один способ):" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "   Способ A - через scp:" -ForegroundColor Yellow
-Write-Host "   scp -r -i путь\к\ключу build\web\* kyte-777@94.131.80.213:/var/www/kyte-mobile/web/" -ForegroundColor Gray
+Write-Host "   scp -r -i путь\к\ключу build\web\* kyte-777@94.131.88.135:/var/www/kyte-mobile/web/" -ForegroundColor Gray
 Write-Host ""
 Write-Host "   Способ B - через WinSCP/FileZilla:" -ForegroundColor Yellow
 Write-Host "   Загрузите все файлы из build\web\ в /var/www/kyte-mobile/web/" -ForegroundColor Gray
 Write-Host ""
 Write-Host "4. Настройте Nginx (см. DEPLOY_WEB_APP.md)" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "5. Откройте в браузере: http://94.131.80.213/mobail/" -ForegroundColor Green
+Write-Host "5. Откройте в браузере: http://94.131.88.135/mobail/" -ForegroundColor Green
 
 
 

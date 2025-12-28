@@ -9,7 +9,7 @@
 ### Вариант 1: Через WinSCP/FileZilla (рекомендуется)
 
 1. Подключитесь к серверу через SFTP:
-   - Хост: `94.131.80.213`
+   - Хост: `94.131.88.135`
    - Пользователь: `kyte-777`
    - Порт: `22`
 
@@ -21,7 +21,7 @@
 
 ```powershell
 # Замените путь к ключу на ваш
-scp -r -i C:\Users\1\.ssh\ваш_ключ build\web\* kyte-777@94.131.80.213:/var/www/kyte-mobile/web/
+scp -r -i C:\Users\1\.ssh\ваш_ключ build\web\* kyte-777@94.131.88.135:/var/www/kyte-mobile/web/
 ```
 
 ## ⚙️ Настройка на сервере
@@ -29,7 +29,7 @@ scp -r -i C:\Users\1\.ssh\ваш_ключ build\web\* kyte-777@94.131.80.213:/va
 Подключитесь к серверу и выполните:
 
 ```bash
-ssh kyte-777@94.131.80.213
+ssh kyte-777@94.131.88.135
 
 # 1. Создайте директорию
 sudo mkdir -p /var/www/kyte-mobile/web
@@ -111,9 +111,9 @@ sudo systemctl restart nginx
 ```bash
 cd /var/www/kyte-backend/backend
 if grep -q "CORS_ORIGIN" .env; then
-    sed -i 's|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|' .env
+    sed -i 's|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|' .env
 else
-    echo "CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" >> .env
+    echo "CORS_ORIGIN=http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" >> .env
 fi
 sudo pm2 restart kyte-backend
 ```
@@ -121,9 +121,9 @@ sudo pm2 restart kyte-backend
 ## ✅ Готово!
 
 Откройте в браузере:
-- **http://94.131.80.213/mobail/** - главная страница
-- **http://94.131.80.213/mobail/login** - страница входа
-- **http://94.131.80.213/mobail/register** - страница регистрации
+- **http://94.131.88.135/mobail/** - главная страница
+- **http://94.131.88.135/mobail/login** - страница входа
+- **http://94.131.88.135/mobail/register** - страница регистрации
 
 Теперь вы можете полностью тестировать все эндпоинты!
 

@@ -49,7 +49,7 @@ AWS_REGION=us-east-1
 ### Шаг 1: Отправка кода (уже работает ✅)
 
 ```bash
-curl -X POST http://94.131.80.213/api/auth/phone/send-code \
+curl -X POST http://94.131.88.135/api/auth/phone/send-code \
   -H "Content-Type: application/json" \
   -d '{"phone": "+79686288842"}'
 ```
@@ -61,7 +61,7 @@ curl -X POST http://94.131.80.213/api/auth/phone/send-code \
 ### Шаг 3: Проверка кода и регистрация
 
 ```bash
-curl -X POST http://94.131.80.213/api/auth/phone/verify-code \
+curl -X POST http://94.131.88.135/api/auth/phone/verify-code \
   -H "Content-Type: application/json" \
   -d '{
     "phone": "+79686288842",

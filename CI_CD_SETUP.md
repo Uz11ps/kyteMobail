@@ -39,7 +39,7 @@ ssh-keygen -t ed25519 -C "github-actions-deploy" -f ~/.ssh/github_deploy_key
 ### На сервере:
 
 ```bash
-ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.80.213
+ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.88.135
 
 # Создайте директорию .ssh если её нет
 mkdir -p ~/.ssh
@@ -69,7 +69,7 @@ chmod 600 ~/.ssh/authorized_keys
 - **Значение:** `kyte-777`
 
 ### `SERVER_HOST`
-- **Значение:** `94.131.80.213`
+- **Значение:** `94.131.88.135`
 
 ### `SERVER_PATH`
 - **Значение:** `/var/www/kyte-backend/backend`
@@ -139,10 +139,10 @@ chmod +x deploy.sh
 
 ```bash
 # С Windows
-scp -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" -r backend kyte-777@94.131.80.213:/tmp/
+scp -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" -r backend kyte-777@94.131.88.135:/tmp/
 
 # На сервере
-ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.80.213
+ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.88.135
 cd /tmp/backend
 chmod +x deploy.sh
 ./deploy.sh

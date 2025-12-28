@@ -9,7 +9,7 @@
 ### 2.1. Подключитесь к серверу:
 
 ```bash
-ssh kyte-777@94.131.80.213
+ssh kyte-777@94.131.88.135
 ```
 
 ### 2.2. Создайте директорию:
@@ -25,7 +25,7 @@ sudo chown -R kyte-777:kyte-777 /var/www/kyte-mobile
 
 ```powershell
 # Найдите ваш SSH ключ и замените путь
-scp -r -i C:\Users\1\.ssh\ваш_ключ build\web\* kyte-777@94.131.80.213:/var/www/kyte-mobile/web/
+scp -r -i C:\Users\1\.ssh\ваш_ключ build\web\* kyte-777@94.131.88.135:/var/www/kyte-mobile/web/
 ```
 
 **Способ B - через WinSCP/FileZilla:**
@@ -123,9 +123,9 @@ cd /var/www/kyte-backend/backend
 
 # Обновите CORS_ORIGIN
 if grep -q "CORS_ORIGIN" .env; then
-    sed -i 's|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|' .env
+    sed -i 's|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|' .env
 else
-    echo "CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" >> .env
+    echo "CORS_ORIGIN=http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" >> .env
 fi
 
 # Перезапустите backend
@@ -135,14 +135,14 @@ sudo pm2 restart kyte-backend
 ## Шаг 3: Проверка
 
 Откройте в браузере:
-- **Главная:** http://94.131.80.213/mobail/
-- **Вход:** http://94.131.80.213/mobail/login
-- **Регистрация:** http://94.131.80.213/mobail/register
-- **API Health:** http://94.131.80.213/api/health
+- **Главная:** http://94.131.88.135/mobail/
+- **Вход:** http://94.131.88.135/mobail/login
+- **Регистрация:** http://94.131.88.135/mobail/register
+- **API Health:** http://94.131.88.135/api/health
 
 ## Готово! 🎉
 
-Теперь вы можете тестировать приложение по адресу `http://94.131.80.213/mobail/`
+Теперь вы можете тестировать приложение по адресу `http://94.131.88.135/mobail/`
 
 
 

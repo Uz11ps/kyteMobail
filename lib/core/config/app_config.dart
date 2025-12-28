@@ -1,6 +1,6 @@
 class AppConfig {
   // Backend API URL
-  // Production сервер: http://94.131.80.213
+  // Production сервер: http://94.131.88.135
   // Для локальной разработки используйте:
   // - Windows/Web: http://localhost:3000
   // - Android эмулятор: http://10.0.2.2:3000 (10.0.2.2 = localhost на хосте)
@@ -9,11 +9,11 @@ class AppConfig {
   // - Реальный iPhone (Mac): http://192.168.1.81:3000
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://94.131.80.213', // Production сервер на Yandex Cloud (Nginx проксирует на порт 3000)
+    defaultValue: 'http://94.131.88.135', // Production сервер на Yandex Cloud (Nginx проксирует на порт 3000)
   );
   
   // WebSocket URL
-  // Production сервер: ws://94.131.80.213 (через Nginx)
+  // Production сервер: ws://94.131.88.135 (через Nginx)
   // Для локальной разработки используйте:
   // - Windows/Web: ws://localhost:3000
   // - Android эмулятор: ws://10.0.2.2:3000
@@ -22,7 +22,7 @@ class AppConfig {
   // - Реальный iPhone (Mac): ws://192.168.1.81:3000
   static const String wsBaseUrl = String.fromEnvironment(
     'WS_BASE_URL',
-    defaultValue: 'ws://94.131.80.213', // Production сервер на Yandex Cloud (Nginx проксирует на порт 3000)
+    defaultValue: 'ws://94.131.88.135', // Production сервер на Yandex Cloud (Nginx проксирует на порт 3000)
   );
   
   // Google OAuth Client ID - получите в Google Cloud Console

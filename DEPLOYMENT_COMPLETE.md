@@ -13,9 +13,9 @@
 
 ## 🌐 Доступные адреса:
 
-- **Backend API:** http://94.131.80.213/api
-- **Health Check:** http://94.131.80.213/api/health
-- **WebSocket:** ws://94.131.80.213
+- **Backend API:** http://94.131.88.135/api
+- **Health Check:** http://94.131.88.135/api/health
+- **WebSocket:** ws://94.131.88.135
 
 ---
 
@@ -42,7 +42,7 @@ flutter run --dart-define=API_BASE_URL=http://localhost:3000 --dart-define=WS_BA
 ### Просмотр логов:
 
 ```bash
-ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.80.213
+ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.88.135
 sudo pm2 logs kyte-backend
 ```
 
@@ -75,7 +75,7 @@ sudo pm2 status
 
 1. Проверьте что backend работает:
    ```bash
-   curl http://94.131.80.213/api/health
+   curl http://94.131.88.135/api/health
    ```
 
 2. Проверьте логи backend:

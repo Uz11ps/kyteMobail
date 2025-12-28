@@ -3,7 +3,7 @@
 Write-Host "🔧 Обновление CORS_ORIGIN на сервере..." -ForegroundColor Green
 Write-Host ""
 
-$serverIP = "94.131.80.213"
+$serverIP = "94.131.88.135"
 $serverUser = "kyte-777"
 $backendPath = "/var/www/kyte-backend/backend"
 

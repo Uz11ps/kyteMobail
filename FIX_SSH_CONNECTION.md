@@ -27,14 +27,14 @@
 
 ```powershell
 # Вариант 1: С двойными слешами
-ssh -i "C:\\Users\\1\\.ssh\\yandex_key" kyte-777@94.131.80.213
+ssh -i "C:\\Users\\1\\.ssh\\yandex_key" kyte-777@94.131.88.135
 
 # Вариант 2: С одинарными слешами в кавычках
-ssh -i "C:/Users/1/.ssh/yandex_key" kyte-777@94.131.80.213
+ssh -i "C:/Users/1/.ssh/yandex_key" kyte-777@94.131.88.135
 
 # Вариант 3: Относительный путь (если в директории .ssh)
 cd C:\Users\1\.ssh
-ssh -i yandex_key kyte-777@94.131.80.213
+ssh -i yandex_key kyte-777@94.131.88.135
 ```
 
 ### Решение 3: Если ключ в формате PuTTY (.ppk)
@@ -46,7 +46,7 @@ ssh -i yandex_key kyte-777@94.131.80.213
    - Или через Chocolatey: `choco install putty`
 
 2. **Используйте PuTTY для подключения:**
-   - Host: `94.131.80.213`
+   - Host: `94.131.88.135`
    - Port: `22`
    - Connection → SSH → Auth → Credentials → Private key file: выберите `.ppk` файл
    - Connection → Data → Auto-login username: `kyte-777`
@@ -81,7 +81,7 @@ cat C:\Users\1\.ssh\yandex_new_key.pub
 Если заказчик настроил вход по паролю:
 
 ```powershell
-ssh kyte-777@94.131.80.213
+ssh kyte-777@94.131.88.135
 # Введите пароль когда попросит
 ```
 
@@ -114,7 +114,7 @@ Get-Content C:\Users\1\.ssh\yandex_key | Select-Object -First 1
 ### Шаг 3: Попробуйте подключиться с verbose режимом
 
 ```powershell
-ssh -v -i C:\Users\1\.ssh\yandex_key kyte-777@94.131.80.213
+ssh -v -i C:\Users\1\.ssh\yandex_key kyte-777@94.131.88.135
 ```
 
 Это покажет подробную информацию о процессе подключения.
@@ -154,6 +154,6 @@ cat C:\Users\1\.ssh\yandex_cloud.pub
 
 **Затем подключитесь:**
 ```powershell
-ssh -i C:\Users\1\.ssh\yandex_cloud kyte-777@94.131.80.213
+ssh -i C:\Users\1\.ssh\yandex_cloud kyte-777@94.131.88.135
 ```
 

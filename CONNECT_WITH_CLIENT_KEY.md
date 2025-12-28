@@ -8,7 +8,7 @@
 ## Команда для подключения:
 
 ```powershell
-ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.80.213
+ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.88.135
 ```
 
 ## После подключения:
@@ -24,7 +24,7 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt-get install -y nodejs pm2 nginx git
 
 # 2. Загрузите backend с Windows:
-# scp -r backend kyte-777@94.131.80.213:/tmp/
+# scp -r backend kyte-777@94.131.88.135:/tmp/
 
 # 3. На сервере настройте и запустите (см. DEPLOY_NOW.md)
 ```

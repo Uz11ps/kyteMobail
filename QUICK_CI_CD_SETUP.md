@@ -24,7 +24,7 @@ Get-Content C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789
 |-----|----------|
 | `SSH_PRIVATE_KEY` | Весь приватный ключ (из шага 1) |
 | `SERVER_USER` | `kyte-777` |
-| `SERVER_HOST` | `94.131.80.213` |
+| `SERVER_HOST` | `94.131.88.135` |
 | `SERVER_PATH` | `/var/www/kyte-backend/backend` |
 
 ---
@@ -32,7 +32,7 @@ Get-Content C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789
 ### 3. Проверьте что публичный ключ на сервере
 
 ```bash
-ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.80.213 "cat ~/.ssh/authorized_keys"
+ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.88.135 "cat ~/.ssh/authorized_keys"
 ```
 
 Если ключ уже есть - всё готово!
@@ -66,7 +66,7 @@ git push origin main
 ## 🔍 Проверка на сервере:
 
 ```bash
-ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.80.213
+ssh -i "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789" kyte-777@94.131.88.135
 sudo pm2 status kyte-backend
 sudo pm2 logs kyte-backend --lines 20
 ```

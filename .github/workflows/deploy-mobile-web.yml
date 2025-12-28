@@ -83,9 +83,9 @@ jobs:
             # Обновляем CORS_ORIGIN
             cd /var/www/kyte-backend/backend
             if grep -q "CORS_ORIGIN" .env; then
-              sudo sed -i "s|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|" .env
+              sudo sed -i "s|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|" .env
             else
-              echo "CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" | sudo tee -a .env
+              echo "CORS_ORIGIN=http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" | sudo tee -a .env
             fi
             
             # Перезапускаем backend для применения CORS

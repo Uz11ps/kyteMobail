@@ -10,14 +10,14 @@
 
 ```bash
 # Подключение
-ssh kyte-777@94.131.80.213
+ssh kyte-777@94.131.88.135
 
 # Создание директории
 sudo mkdir -p /var/www/kyte-mobile/web
 sudo chown -R kyte-777:kyte-777 /var/www/kyte-mobile
 
 # Загрузка файлов (выполните на вашем компьютере через scp или WinSCP)
-# scp -r build\web\* kyte-777@94.131.80.213:/var/www/kyte-mobile/web/
+# scp -r build\web\* kyte-777@94.131.88.135:/var/www/kyte-mobile/web/
 
 # Настройка Nginx
 sudo tee /etc/nginx/sites-available/kyte-backend > /dev/null <<'NGINX_EOF'
@@ -82,9 +82,9 @@ sudo nginx -t && sudo systemctl restart nginx
 # Обновление CORS_ORIGIN
 cd /var/www/kyte-backend/backend
 if grep -q "CORS_ORIGIN" .env; then
-    sed -i 's|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|' .env
+    sed -i 's|CORS_ORIGIN=.*|CORS_ORIGIN=http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085|' .env
 else
-    echo "CORS_ORIGIN=http://94.131.80.213,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" >> .env
+    echo "CORS_ORIGIN=http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085" >> .env
 fi
 
 # Перезапуск backend
@@ -104,7 +104,7 @@ curl http://localhost/api/health
 $sshKey = "C:\Users\1\.ssh\ваш_ключ"  # Замените на путь к вашему ключу
 
 # Загрузите файлы
-scp -r -i $sshKey build\web\* kyte-777@94.131.80.213:/var/www/kyte-mobile/web/
+scp -r -i $sshKey build\web\* kyte-777@94.131.88.135:/var/www/kyte-mobile/web/
 ```
 
 Или используйте WinSCP/FileZilla для загрузки всех файлов из `build\web\` в `/var/www/kyte-mobile/web/`
@@ -112,9 +112,9 @@ scp -r -i $sshKey build\web\* kyte-777@94.131.80.213:/var/www/kyte-mobile/web/
 ## ✅ Готово!
 
 Откройте в браузере:
-- http://94.131.80.213/mobail/ - главная
-- http://94.131.80.213/mobail/login - вход
-- http://94.131.80.213/mobail/register - регистрация
+- http://94.131.88.135/mobail/ - главная
+- http://94.131.88.135/mobail/login - вход
+- http://94.131.88.135/mobail/register - регистрация
 
 
 

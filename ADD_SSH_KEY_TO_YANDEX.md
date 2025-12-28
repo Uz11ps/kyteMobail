@@ -15,7 +15,7 @@ cat C:\Users\1\.ssh\yandex_cloud.pub
 
 1. Откройте: https://console.yandex.cloud
 2. Перейдите: **Compute Cloud → Виртуальные машины**
-3. Найдите VM с IP `94.131.80.213`
+3. Найдите VM с IP `94.131.88.135`
 4. Нажмите на VM
 5. В разделе **Доступ** или **SSH ключи**
 6. Нажмите **Добавить ключ** или **Изменить**
@@ -33,7 +33,7 @@ cat C:\Users\1\.ssh\yandex_cloud.pub
 После того как заказчик добавит ключ:
 
 ```powershell
-ssh -i C:\Users\1\.ssh\yandex_cloud kyte-777@94.131.80.213
+ssh -i C:\Users\1\.ssh\yandex_cloud kyte-777@94.131.88.135
 ```
 
 ---
@@ -49,6 +49,6 @@ cat C:\Users\1\.ssh\id_ed25519.pub
 # Попросите заказчика добавить его
 
 # Подключитесь
-ssh -i C:\Users\1\.ssh\id_ed25519 kyte-777@94.131.80.213
+ssh -i C:\Users\1\.ssh\id_ed25519 kyte-777@94.131.88.135
 ```
 

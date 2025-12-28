@@ -26,7 +26,7 @@ flutter build web --release --web-renderer html
 Подключитесь к серверу и обновите конфигурацию Nginx:
 
 ```bash
-ssh kyte-777@94.131.80.213
+ssh kyte-777@94.131.88.135
 sudo nano /etc/nginx/sites-available/kyte-backend
 ```
 
@@ -118,7 +118,7 @@ sudo chown -R kyte-777:kyte-777 /var/www/kyte-mobile
 ```powershell
 # Используйте scp или sftp для загрузки файлов
 # Замените путь к SSH ключу на ваш
-scp -r -i C:\Users\1\.ssh\ваш_ключ build\web\* kyte-777@94.131.80.213:/var/www/kyte-mobile/web/
+scp -r -i C:\Users\1\.ssh\ваш_ключ build\web\* kyte-777@94.131.88.135:/var/www/kyte-mobile/web/
 ```
 
 Или используйте WinSCP, FileZilla или другой SFTP клиент.
@@ -128,16 +128,16 @@ scp -r -i C:\Users\1\.ssh\ваш_ключ build\web\* kyte-777@94.131.80.213:/va
 Перед сборкой обновите `lib/core/config/app_config.dart`:
 
 ```dart
-static const String apiBaseUrl = 'http://94.131.80.213';
-static const String wsBaseUrl = 'ws://94.131.80.213';
+static const String apiBaseUrl = 'http://94.131.88.135';
+static const String wsBaseUrl = 'ws://94.131.88.135';
 ```
 
 ## Шаг 6: Проверка
 
 Откройте в браузере:
-- http://94.131.80.213/mobail/ - главная страница
-- http://94.131.80.213/mobail/login - страница входа
-- http://94.131.80.213/api/health - проверка API
+- http://94.131.88.135/mobail/ - главная страница
+- http://94.131.88.135/mobail/login - страница входа
+- http://94.131.88.135/api/health - проверка API
 
 
 

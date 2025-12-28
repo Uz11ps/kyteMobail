@@ -1,7 +1,7 @@
 # Скрипт для развертывания backend на Yandex Cloud
 
 param(
-    [string]$ServerIP = "94.131.80.213",
+    [string]$ServerIP = "94.131.88.135",
     [string]$Username = "kyte-777",
     [string]$KeyPath = "C:\Users\1\.ssh\yandex_key\ssh-key-1765132631789"
 )

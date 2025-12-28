@@ -30,7 +30,7 @@ sudo pm2 logs kyte-backend --lines 20
 
 Откройте:
 ```
-http://94.131.80.213/api/health
+http://94.131.88.135/api/health
 ```
 
 Должен вернуться: `{"status":"ok","timestamp":"..."}`
@@ -46,15 +46,15 @@ http://94.131.80.213/api/health
 ### 2. Обновите URL:
 
 ```dart
-static const String apiBaseUrl = 'http://94.131.80.213';
-static const String wsBaseUrl = 'ws://94.131.80.213';
+static const String apiBaseUrl = 'http://94.131.88.135';
+static const String wsBaseUrl = 'ws://94.131.88.135';
 ```
 
 Или для HTTPS (если настроен SSL):
 
 ```dart
-static const String apiBaseUrl = 'https://94.131.80.213';
-static const String wsBaseUrl = 'wss://94.131.80.213';
+static const String apiBaseUrl = 'https://94.131.88.135';
+static const String wsBaseUrl = 'wss://94.131.88.135';
 ```
 
 ---
@@ -104,10 +104,10 @@ sudo tail -f /var/log/nginx/access.log
 
 ## API Endpoints:
 
-- **Health Check:** `GET http://94.131.80.213/api/health`
-- **Auth:** `POST http://94.131.80.213/api/auth/login`
-- **Chats:** `GET http://94.131.80.213/api/chats`
-- **WebSocket:** `ws://94.131.80.213`
+- **Health Check:** `GET http://94.131.88.135/api/health`
+- **Auth:** `POST http://94.131.88.135/api/auth/login`
+- **Chats:** `GET http://94.131.88.135/api/chats`
+- **WebSocket:** `ws://94.131.88.135`
 
 ---
 
