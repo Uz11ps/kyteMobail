@@ -67,7 +67,11 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   }
 
   void _handleCodeSubmit() {
-    if (_codeController.text.length == 5) {
+    if (_codeController.text.length == 6) {
+      _focusNode.unfocus();
+      setState(() {
+        _showKeyboard = false;
+      });
       context.read<AuthBloc>().add(
             AuthPhoneLoginRequested(
               phone: widget.phoneNumber,
@@ -78,17 +82,26 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   }
 
   void _onNumberPressed(String number) {
-    if (_codeController.text.length < 5) {
-      _codeController.text += number;
-      if (_codeController.text.length == 5) {
-        _handleCodeSubmit();
+    if (_codeController.text.length < 6) {
+      setState(() {
+        _codeController.text += number;
+      });
+      if (_codeController.text.length == 6) {
+        // Даем небольшую задержку перед авто-отправкой, чтобы пользователь увидел 6-ю точку
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted && _codeController.text.length == 6) {
+            _handleCodeSubmit();
+          }
+        });
       }
     }
   }
 
   void _onBackspacePressed() {
     if (_codeController.text.isNotEmpty) {
-      _codeController.text = _codeController.text.substring(0, _codeController.text.length - 1);
+      setState(() {
+        _codeController.text = _codeController.text.substring(0, _codeController.text.length - 1);
+      });
     }
   }
 
@@ -179,108 +192,165 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                       _showKeyboard = true;
                     });
                   },
-                  child: SizedBox(
-                    height: 56,
-                    child: Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        // Backdrop blur
-                        Positioned.fill(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(18),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                              child: const SizedBox.expand(),
-                            ),
-                          ),
-                        ),
-                        // Base fill
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              gradient: LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [
-                                  Colors.white.withOpacity(0.06),
-                                  Colors.black.withOpacity(0.6),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Glass effect
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              color: Colors.black.withOpacity(0.2),
-                            ),
-                          ),
-                        ),
-                        // Border
-                        Positioned.fill(
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(
-                                color: Colors.white.withOpacity(0.18),
-                                width: 1,
-                              ),
-                            ),
-                          ),
-                        ),
-                        // TextField (скрытый, для фокуса)
-                        Opacity(
-                          opacity: 0,
-                          child: TextField(
-                            controller: _codeController,
-                            focusNode: _focusNode,
-                            keyboardType: TextInputType.number,
-                            maxLength: 5,
-                            buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                            ),
-                            decoration: const InputDecoration(
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                            ),
-                            onChanged: (value) {
-                              if (value.length == 5) {
-                                _handleCodeSubmit();
-                              }
-                            },
-                          ),
-                        ),
-                        // Отображение точек
-                        Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(5, (index) {
-                              final hasDigit = index < _codeController.text.length;
-                              return Container(
-                                margin: const EdgeInsets.symmetric(horizontal: 8),
-                                width: 12,
-                                height: 12,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: hasDigit 
-                                      ? Colors.white 
-                                      : Colors.white.withOpacity(0.3),
+                  child: BlocBuilder<AuthBloc, AuthState>(
+                    builder: (context, state) {
+                      final isLoading = state is AuthLoading;
+                      return SizedBox(
+                        height: 56,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            // Backdrop blur
+                            Positioned.fill(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(18),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                                  child: const SizedBox.expand(),
                                 ),
-                              );
-                            }),
-                          ),
+                              ),
+                            ),
+                            // Base fill
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withOpacity(0.06),
+                                      Colors.black.withOpacity(0.6),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Glass effect
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  color: Colors.black.withOpacity(0.2),
+                                ),
+                              ),
+                            ),
+                            // Border
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.18),
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // TextField (скрытый, для фокуса)
+                            Opacity(
+                              opacity: 0,
+                              child: TextField(
+                                controller: _codeController,
+                                focusNode: _focusNode,
+                                keyboardType: TextInputType.number,
+                                maxLength: 6,
+                                buildCounter: (context, {required currentLength, required isFocused, maxLength}) => null,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                ),
+                                onChanged: (value) {
+                                  setState(() {}); // Обновляем точки при вводе с системной клавиатуры
+                                  if (value.length == 6) {
+                                    _handleCodeSubmit();
+                                  }
+                                },
+                              ),
+                            ),
+                            // Отображение точек или индикатора загрузки
+                            Center(
+                              child: isLoading 
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: List.generate(6, (index) {
+                                      final hasDigit = index < _codeController.text.length;
+                                      return Container(
+                                        margin: const EdgeInsets.symmetric(horizontal: 8),
+                                        width: 12,
+                                        height: 12,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: hasDigit 
+                                              ? Colors.white 
+                                              : Colors.white.withOpacity(0.3),
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
                 ),
+              ),
+              const SizedBox(height: 24),
+              // Кнопка подтверждения
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  final isLoading = state is AuthLoading;
+                  final isCodeComplete = _codeController.text.length == 6;
+                  
+                  if (!isCodeComplete && !isLoading) return const SizedBox.shrink();
+                  
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: ElevatedButton(
+                      onPressed: (isCodeComplete && !isLoading) ? _handleCodeSubmit : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF1D2631),
+                        minimumSize: const Size(double.infinity, 56),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1D2631)),
+                              ),
+                            )
+                          : const Text(
+                              'Confirm',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
               // Кнопка "Send again"
@@ -324,8 +394,15 @@ class _NumberKeyboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final keypadData = [
+      ['1', ''], ['2', 'ABC'], ['3', 'DEF'],
+      ['4', 'GHI'], ['5', 'JKL'], ['6', 'MNO'],
+      ['7', 'PQRS'], ['8', 'TUV'], ['9', 'WXYZ'],
+      [null, null], ['0', '+'], ['backspace', null],
+    ];
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
       decoration: BoxDecoration(
         color: const Color(0xFF1D2631),
         border: Border(
@@ -336,48 +413,53 @@ class _NumberKeyboard extends StatelessWidget {
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Ряды 1-3
-          for (int row = 0; row < 3; row++)
+          for (int row = 0; row < 4; row++)
             Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  for (int col = 1; col <= 3; col++)
-                    _NumberKey(
-                      number: (row * 3 + col).toString(),
-                      onPressed: () => onNumberPressed((row * 3 + col).toString()),
+                  for (int col = 0; col < 3; col++)
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
+                        child: _buildKey(keypadData[row * 3 + col]),
+                      ),
                     ),
                 ],
               ),
             ),
-          // Ряд с 0 и backspace
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              const SizedBox(width: 120), // Пустое место
-              _NumberKey(
-                number: '0',
-                onPressed: () => onNumberPressed('0'),
-              ),
-              _BackspaceKey(
-                onPressed: onBackspacePressed,
-              ),
-            ],
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildKey(List<dynamic> data) {
+    final key = data[0];
+    final label = data[1];
+
+    if (key == null) return const SizedBox.shrink();
+    if (key == 'backspace') {
+      return _BackspaceKey(onPressed: onBackspacePressed);
+    }
+
+    return _NumberKey(
+      number: key as String,
+      label: label as String,
+      onPressed: () => onNumberPressed(key),
     );
   }
 }
 
 class _NumberKey extends StatelessWidget {
   final String number;
+  final String label;
   final VoidCallback onPressed;
 
   const _NumberKey({
     required this.number,
+    required this.label,
     required this.onPressed,
   });
 
@@ -389,8 +471,7 @@ class _NumberKey extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          width: 120,
-          height: 56,
+          height: 60,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: const Color(0xFF161B22),
@@ -408,17 +489,18 @@ class _NumberKey extends StatelessWidget {
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.w600,
+                  height: 1.1,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                'DEF',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.4),
-                  fontSize: 10,
-                  fontWeight: FontWeight.w500,
+              if (label.isNotEmpty)
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.4),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
             ],
           ),
         ),
@@ -442,8 +524,7 @@ class _BackspaceKey extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(12),
         child: Container(
-          width: 120,
-          height: 56,
+          height: 60,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             color: const Color(0xFF161B22),
