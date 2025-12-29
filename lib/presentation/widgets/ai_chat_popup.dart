@@ -4,8 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'dart:ui';
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html if (dart.library.io) 'package:kyte_mobile/core/utils/html_stub.dart';
+import 'dart:html' as html;
 import 'dart:typed_data';
 import '../../data/models/message_model.dart';
 import '../../core/di/service_locator.dart';
@@ -81,20 +80,20 @@ class _AIChatPopupState extends State<AIChatPopup> {
     try {
       FilePickerResult? result;
       
-      if (kIsWeb) {
-        html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-        uploadInput.click();
-        await uploadInput.onChange.first;
-        if (uploadInput.files != null && uploadInput.files!.isNotEmpty) {
-          await _uploadFileForAIWeb(uploadInput.files!.first);
-        }
-      } else {
+      if (Platform.isAndroid || Platform.isIOS) {
         result = await FilePicker.platform.pickFiles(
           type: FileType.any,
           allowMultiple: false,
         );
         if (result != null && result.files.single.path != null) {
           await _uploadFileForAIMobile(result.files.single.path!);
+        }
+      } else {
+        html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+        uploadInput.click();
+        await uploadInput.onChange.first;
+        if (uploadInput.files != null && uploadInput.files!.isNotEmpty) {
+          await _uploadFileForAIWeb(uploadInput.files!.first);
         }
       }
     } catch (e) {

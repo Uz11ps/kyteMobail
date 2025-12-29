@@ -5,8 +5,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'dart:ui';
 import 'dart:io';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html if (dart.library.io) 'package:kyte_mobile/core/utils/html_stub.dart';
+import 'dart:html' as html;
 import 'dart:typed_data';
 import '../../bloc/chat/chat_bloc.dart';
 import '../../bloc/ai/ai_bloc.dart';
@@ -18,6 +17,8 @@ import '../../../core/network/websocket_client.dart';
 import '../../../core/utils/storage_keys.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/constants/api_endpoints.dart';
+import '../../widgets/edit_chat_bottom_sheet.dart';
+import '../../widgets/calendar_bottom_sheet.dart';
 import 'dart:convert';
 
 class ChatScreen extends StatefulWidget {
@@ -301,8 +302,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  Colors.white.withOpacity(0.06),
-                                  Colors.black.withOpacity(0.6),
+                                  Colors.white.withOpacity(0.015),
+                                  Colors.black.withOpacity(0.15),
                                 ],
                               ),
                             ),
@@ -310,8 +311,10 @@ class _ChatScreenState extends State<ChatScreen> {
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 _ChatHeader(
+                                  chatId: widget.chatId,
                                   chatName: widget.chatName,
                                   memberCount: _memberCount,
+                                  chat: _chat,
                                 ),
                                 _NavigationBar(
                                   chatCount: _messages.length,
@@ -354,12 +357,16 @@ class _ChatScreenState extends State<ChatScreen> {
 }
 
 class _ChatHeader extends StatelessWidget {
+  final String chatId;
   final String chatName;
   final int? memberCount;
+  final ChatModel? chat;
 
   const _ChatHeader({
+    required this.chatId,
     required this.chatName,
     this.memberCount,
+    this.chat,
   });
 
   @override
@@ -403,8 +410,8 @@ class _ChatHeader extends StatelessWidget {
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                                 colors: [
-                                  Colors.white.withOpacity(0.06),
-                                  Colors.black.withOpacity(0.6),
+                                  Colors.white.withOpacity(0.015),
+                                  Colors.black.withOpacity(0.15),
                                 ],
                               ),
                             ),
@@ -415,7 +422,7 @@ class _ChatHeader extends StatelessWidget {
                           child: DecoratedBox(
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withOpacity(0.05),
                             ),
                           ),
                         ),
@@ -425,7 +432,7 @@ class _ChatHeader extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.18),
+                                color: Colors.white.withOpacity(0.09),
                                 width: 1,
                               ),
                             ),
@@ -481,32 +488,63 @@ class _ChatHeader extends StatelessWidget {
             top: 0,
             bottom: 0,
             child: Center(
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.12),
-                    width: 1,
-                  ),
-                  gradient: const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    chatName.split(' ').map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').take(2).join(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 14,
-                          ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    if (chat != null) {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => EditChatBottomSheet(chat: chat!),
+                      );
+                    } else {
+                      // Если чат еще не загружен, создаем временный объект
+                      final tempChat = ChatModel(
+                        id: chatId,
+                        name: chatName,
+                        type: ChatType.group,
+                        participantIds: [],
+                        createdAt: DateTime.now(),
+                      );
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => EditChatBottomSheet(chat: tempChat),
+                      );
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(22),
+                  child: Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withOpacity(0.06),
+                        width: 1,
+                      ),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [Color(0xFF00C6FF), Color(0xFF0072FF)],
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        chatName.split(' ').map((w) => w.isNotEmpty ? w[0].toUpperCase() : '').take(2).join(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
                         ),
                       ),
                     ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -558,7 +596,7 @@ class _DiagonalStripePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _NavigationBar extends StatelessWidget {
+class _NavigationBar extends StatefulWidget {
   final int chatCount;
   final int fileCount;
   final int meetingsCount;
@@ -570,16 +608,47 @@ class _NavigationBar extends StatelessWidget {
   });
 
   @override
+  State<_NavigationBar> createState() => _NavigationBarState();
+}
+
+class _NavigationBarState extends State<_NavigationBar> {
+  bool _isSearchMode = false;
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearchMode() {
+    setState(() {
+      _isSearchMode = !_isSearchMode;
+      if (!_isSearchMode) {
+        _searchController.clear();
+      }
+    });
+    if (_isSearchMode) {
+      // Фокусируем поле ввода после небольшой задержки
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted && _isSearchMode) {
+          FocusScope.of(context).requestFocus(FocusNode());
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      width: 370,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      width: MediaQuery.of(context).size.width - 16, // Ширина экрана минус маленькие отступы по краям
       height: 52, // Увеличена для иконок 44px + padding
       padding: const EdgeInsets.all(4),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Backdrop blur
+          // Backdrop blur (показывается всегда)
           Positioned.fill(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(100),
@@ -589,7 +658,7 @@ class _NavigationBar extends StatelessWidget {
               ),
             ),
           ),
-          // Base fill
+          // Base fill (показывается всегда)
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -598,61 +667,143 @@ class _NavigationBar extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    Colors.white.withOpacity(0.06),
-                    Colors.black.withOpacity(0.6),
+                    Colors.white.withOpacity(0.015),
+                    Colors.black.withOpacity(0.15),
                   ],
                 ),
               ),
             ),
           ),
-          // Glass effect
+          // Glass effect (показывается всегда)
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(100),
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withOpacity(0.05),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.1),
+                  color: Colors.white.withOpacity(0.05),
                   width: 1,
                 ),
               ),
             ),
           ),
           // Content
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Чат с текстом и бейджем (слева)
-              Padding(
-                padding: const EdgeInsets.all(6), // Отступы вокруг кнопки Chat
-                child: _ChatTabItem(
-                  svg: _navIconChat,
-                  badgeValue: chatCount.toString(),
-                ),
-              ),
-              // Остальные три иконки справа
-              Row(
-                mainAxisSize: MainAxisSize.min,
+          if (_isSearchMode)
+            // Режим поиска
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
                 children: [
-                  // Календарь с бейджем
-                  _ChatTabIcon(
-                    svg: _navIconCalendar,
-                    badgeValue: meetingsCount > 0 ? meetingsCount.toString() : null,
+                  // Иконка лупы слева
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: SvgPicture.string(
+                      _navIconSearch,
+                      width: 20,
+                      height: 20,
+                    ),
                   ),
-                  // Документ с бейджем
-                  _ChatTabIcon(
-                    svg: _navIconDocument,
-                    badgeValue: fileCount > 0 ? fileCount.toString() : null,
+                  // Поле ввода без фона
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                      ),
+                      decoration: const InputDecoration(
+                        filled: false,
+                        fillColor: Colors.transparent,
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        contentPadding: EdgeInsets.zero,
+                        isDense: true,
+                      ),
+                    ),
                   ),
-                  // Поиск
-                  _ChatTabIcon(
-                    svg: _navIconSearch,
+                  // Кнопка закрытия справа
+                  Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _toggleSearchMode,
+                      borderRadius: BorderRadius.circular(20),
+                      child: const Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 20,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ],
-          ),
+            )
+          else
+            // Обычный режим с иконками
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // Чат с текстом и бейджем (слева)
+                Padding(
+                  padding: const EdgeInsets.all(6), // Отступы вокруг кнопки Chat
+                  child: _ChatTabItem(
+                    svg: _navIconChat,
+                    badgeValue: widget.chatCount.toString(),
+                  ),
+                ),
+                // Остальные три иконки справа
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Календарь с бейджем
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => const CalendarBottomSheet(),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(1000),
+                        child: _ChatTabIcon(
+                          svg: _navIconCalendar,
+                          badgeValue: widget.meetingsCount > 0 ? widget.meetingsCount.toString() : null,
+                        ),
+                      ),
+                    ),
+                    // Документ с бейджем
+                    _ChatTabIcon(
+                      svg: _navIconDocument,
+                      badgeValue: widget.fileCount > 0 ? widget.fileCount.toString() : null,
+                    ),
+                    // Поиск
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _toggleSearchMode,
+                        borderRadius: BorderRadius.circular(20),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: SvgPicture.string(
+                            _navIconSearch,
+                            width: 20,
+                            height: 20,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -725,7 +876,7 @@ class _ChatTabItem extends StatelessWidget {
                   color: const Color(0xFF232B36),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withOpacity(0.06),
                     width: 1,
                   ),
                 ),
@@ -802,7 +953,7 @@ class _ChatTabIcon extends StatelessWidget {
                   color: const Color(0xFF232B36),
                   borderRadius: BorderRadius.circular(999),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.12),
+                    color: Colors.white.withOpacity(0.06),
                     width: 1,
                   ),
                 ),
@@ -1215,7 +1366,12 @@ class _InputBarState extends State<_InputBar> {
     try {
       FilePickerResult? result;
       
-      if (kIsWeb) {
+      if (Platform.isAndroid || Platform.isIOS) {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          allowMultiple: false,
+        );
+      } else {
         // Web платформа
         html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
         uploadInput.click();
@@ -1226,12 +1382,6 @@ class _InputBarState extends State<_InputBar> {
           await _uploadFileWeb(file);
           return;
         }
-      } else {
-        // Мобильные и desktop платформы
-        result = await FilePicker.platform.pickFiles(
-          type: FileType.any,
-          allowMultiple: false,
-        );
       }
 
       if (result != null && result.files.single.path != null) {
@@ -1438,10 +1588,10 @@ class _GlassButton extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.06),
-                        Colors.black.withOpacity(0.6),
-                      ],
+                                colors: [
+                                  Colors.white.withOpacity(0.03),
+                                  Colors.black.withOpacity(0.3),
+                                ],
                     ),
                   ),
                 ),
@@ -1451,7 +1601,7 @@ class _GlassButton extends StatelessWidget {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withOpacity(0.05),
                   ),
                 ),
               ),
@@ -1461,7 +1611,7 @@ class _GlassButton extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.white.withOpacity(0.18),
+                      color: Colors.white.withOpacity(0.09),
                       width: 1,
                     ),
                   ),
@@ -1554,10 +1704,10 @@ class _GlassInputFieldState extends State<_GlassInputField> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Colors.white.withOpacity(0.06),
-                    Colors.black.withOpacity(0.6),
-                  ],
+                                colors: [
+                                  Colors.white.withOpacity(0.03),
+                                  Colors.black.withOpacity(0.3),
+                                ],
                 ),
               ),
             ),
@@ -1567,7 +1717,7 @@ class _GlassInputFieldState extends State<_GlassInputField> {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
-                color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withOpacity(0.05),
               ),
             ),
           ),
@@ -1577,7 +1727,7 @@ class _GlassInputFieldState extends State<_GlassInputField> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: Colors.white.withOpacity(0.18),
+                  color: Colors.white.withOpacity(0.09),
                   width: 1,
                 ),
               ),
@@ -1746,7 +1896,12 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
     try {
       FilePickerResult? result;
       
-      if (kIsWeb) {
+      if (Platform.isAndroid || Platform.isIOS) {
+        result = await FilePicker.platform.pickFiles(
+          type: FileType.any,
+          allowMultiple: false,
+        );
+      } else {
         // Web платформа
         html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
         uploadInput.click();
@@ -1757,12 +1912,6 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
           await _uploadFileForAIWeb(file);
           return;
         }
-      } else {
-        // Мобильные и desktop платформы
-        result = await FilePicker.platform.pickFiles(
-          type: FileType.any,
-          allowMultiple: false,
-        );
       }
 
       if (result != null && result.files.single.path != null) {
@@ -1998,14 +2147,14 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.white.withOpacity(0.06),
-                          Colors.black.withOpacity(0.6),
-                        ],
+                                colors: [
+                                  Colors.white.withOpacity(0.03),
+                                  Colors.black.withOpacity(0.3),
+                                ],
                       ),
                       border: Border(
                         bottom: BorderSide(
-                          color: Colors.white.withOpacity(0.1),
+                          color: Colors.white.withOpacity(0.05),
                           width: 1,
                         ),
                       ),
@@ -2053,7 +2202,7 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: Colors.white.withOpacity(0.12),
+                              color: Colors.white.withOpacity(0.06),
                               width: 1,
                             ),
                             gradient: const LinearGradient(

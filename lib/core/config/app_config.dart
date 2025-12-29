@@ -36,4 +36,12 @@ class AppConfig {
     return apiBaseUrl != 'https://your-backend-api.com' &&
            wsBaseUrl != 'wss://your-backend-api.com';
   }
+
+  // Проверка, используется ли localhost для разработки
+  static bool get isLocalhost {
+    return apiBaseUrl.contains('localhost') ||
+           apiBaseUrl.contains('127.0.0.1') ||
+           apiBaseUrl.contains('10.0.2.2') ||
+           apiBaseUrl.startsWith('http://192.168.');
+  }
 }

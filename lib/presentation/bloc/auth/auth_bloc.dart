@@ -27,9 +27,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final isAuthenticated = await authRepository.isAuthenticated();
+      // Добавляем таймаут для проверки авторизации
+      final isAuthenticated = await authRepository.isAuthenticated()
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              print('⚠️  Таймаут проверки авторизации');
+              return false;
+            },
+          );
       if (isAuthenticated) {
-        final user = await authRepository.getCurrentUser();
+        final user = await authRepository.getCurrentUser()
+            .timeout(
+              const Duration(seconds: 5),
+              onTimeout: () {
+                print('⚠️  Таймаут получения пользователя');
+                return null;
+              },
+            );
         if (user != null) {
           emit(AuthAuthenticated(user: user));
         } else {
@@ -39,7 +54,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthUnauthenticated());
       }
     } catch (e) {
-      emit(AuthError(message: e.toString()));
+      print('❌ Ошибка проверки авторизации: $e');
+      // При ошибке считаем пользователя неавторизованным
+      emit(AuthUnauthenticated());
     }
   }
 

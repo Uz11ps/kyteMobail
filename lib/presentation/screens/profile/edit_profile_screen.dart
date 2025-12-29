@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:file_picker/file_picker.dart';
 import 'dart:ui';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'dart:html' as html if (dart.library.io) 'package:kyte_mobile/core/utils/html_stub.dart';
+import 'dart:html' as html;
 import 'dart:typed_data';
-import 'dart:io';
 import 'package:dio/dio.dart';
 import '../../../data/models/user_model.dart';
 import '../../../core/di/service_locator.dart';
@@ -25,7 +22,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _nicknameController;
   late TextEditingController _phoneController;
-  late TextEditingController _emailController;
   late TextEditingController _aboutController;
   late TextEditingController _birthdayController;
   DateTime? _birthday;
@@ -38,7 +34,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.user.name ?? '');
     _nicknameController = TextEditingController(text: widget.user.nickname ?? '');
     _phoneController = TextEditingController(text: widget.user.phone ?? '');
-    _emailController = TextEditingController(text: widget.user.email);
     _aboutController = TextEditingController(text: widget.user.about ?? '');
     _birthday = widget.user.birthday;
     _birthdayController = TextEditingController(
@@ -52,41 +47,39 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _nicknameController.dispose();
     _phoneController.dispose();
-    _emailController.dispose();
     _aboutController.dispose();
     _birthdayController.dispose();
     super.dispose();
   }
 
   Future<void> _pickAvatar() async {
-    if (kIsWeb) {
-      final input = html.FileUploadInputElement()..accept = 'image/*';
-      input.click();
+    final input = html.FileUploadInputElement()..accept = 'image/*';
+    input.click();
 
-      input.onChange.listen((e) async {
-        final files = input.files;
-        if (files != null && files.isNotEmpty) {
-          final file = files[0];
-          final reader = html.FileReader();
-          
-          reader.onLoadEnd.listen((e) async {
-            try {
-              setState(() => _isLoading = true);
-              final dio = ServiceLocator().apiClient.dio;
-              
-              // Получаем байты из FileReader (readAsArrayBuffer возвращает ByteBuffer из dart:typed_data)
-              final result = reader.result;
-              if (result == null) {
-                throw Exception('Не удалось прочитать файл');
-              }
-              
-              // Конвертируем ByteBuffer в List<int>
-              List<int> bytes;
-              if (result is ByteBuffer) {
-                bytes = result.asUint8List().toList();
-              } else {
-                throw Exception('Неподдерживаемый тип результата: ${result.runtimeType}');
-              }
+    input.onChange.listen((e) async {
+      final files = input.files;
+      if (files != null && files.isNotEmpty) {
+        final file = files[0];
+        final reader = html.FileReader();
+        
+        reader.onLoadEnd.listen((e) async {
+          try {
+            setState(() => _isLoading = true);
+            final dio = ServiceLocator().apiClient.dio;
+            
+            // Получаем байты из FileReader (readAsArrayBuffer возвращает ByteBuffer из dart:typed_data)
+            final result = reader.result;
+            if (result == null) {
+              throw Exception('Не удалось прочитать файл');
+            }
+            
+            // Конвертируем ByteBuffer в List<int>
+            List<int> bytes;
+            if (result is ByteBuffer) {
+              bytes = result.asUint8List().toList();
+            } else {
+              throw Exception('Неподдерживаемый тип результата: ${result.runtimeType}');
+            }
             
             // Определяем ContentType
             String? contentType;
@@ -160,56 +153,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         
         reader.onError.listen((e) {
           setState(() => _isLoading = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Ошибка чтения файла')),
+          );
         });
         
-        reader.readAsDataUrl(file);
-        }
-      });
-    } else {
-      // Мобильные и desktop платформы
-      try {
-        final result = await FilePicker.platform.pickFiles(
-          type: FileType.image,
-          allowMultiple: false,
-        );
-        
-        if (result != null && result.files.single.path != null) {
-          setState(() => _isLoading = true);
-          final file = File(result.files.single.path!);
-          final dio = ServiceLocator().apiClient.dio;
-          
-          final formData = FormData.fromMap({
-            'avatar': await MultipartFile.fromFile(
-              file.path,
-              filename: file.path.split('/').last,
-            ),
-          });
-          
-          final response = await dio.post(
-            '/api/user/avatar',
-            data: formData,
-          );
-          
-          if (response.data != null && response.data['avatarUrl'] != null) {
-            setState(() {
-              _avatarUrl = response.data['avatarUrl'];
-              _isLoading = false;
-            });
-            
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Аватар успешно загружен')),
-            );
-          } else {
-            throw Exception('URL аватара не получен');
-          }
-        }
-      } catch (e) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Ошибка загрузки аватара: $e')),
-        );
+        // Читаем файл как массив байтов
+        reader.readAsArrayBuffer(file);
       }
-    }
+    });
   }
 
   Future<void> _selectBirthday() async {
@@ -236,7 +188,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         name: _nameController.text.trim().isEmpty ? null : _nameController.text.trim(),
         nickname: _nicknameController.text.trim().isEmpty ? null : _nicknameController.text.trim(),
         phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-        email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
         about: _aboutController.text.trim().isEmpty ? null : _aboutController.text.trim(),
         birthday: _birthday,
       );
@@ -520,12 +471,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     _EditField(
                       label: 'Никнейм',
                       controller: _nicknameController,
-                    ),
-                    const SizedBox(height: 12),
-                    _EditField(
-                      label: 'Email',
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 12),
                     _EditField(

@@ -65,7 +65,9 @@ class AuthRepositoryImpl implements AuthRepository {
       await _storage.write(StorageKeys.accessToken, accessToken.toString());
       await _storage.write(StorageKeys.refreshToken, refreshToken.toString());
       await _storage.write(StorageKeys.userId, user.id);
-      await _storage.write(StorageKeys.userEmail, user.email);
+      if (user.email != null) {
+        await _storage.write(StorageKeys.userEmail, user.email!);
+      }
 
       print('✅ User data saved: id=${user.id}, email=${user.email}');
       return user;
@@ -143,7 +145,9 @@ class AuthRepositoryImpl implements AuthRepository {
       await _storage.write(StorageKeys.accessToken, newAccessToken.toString());
       await _storage.write(StorageKeys.refreshToken, newRefreshToken.toString());
       await _storage.write(StorageKeys.userId, user.id);
-      await _storage.write(StorageKeys.userEmail, user.email);
+      if (user.email != null) {
+        await _storage.write(StorageKeys.userEmail, user.email!);
+      }
 
       return user;
     } on DioException catch (e) {
@@ -218,7 +222,9 @@ class AuthRepositoryImpl implements AuthRepository {
       await _storage.write(StorageKeys.accessToken, newAccessToken.toString());
       await _storage.write(StorageKeys.refreshToken, newRefreshToken.toString());
       await _storage.write(StorageKeys.userId, user.id);
-      await _storage.write(StorageKeys.userEmail, user.email);
+      if (user.email != null) {
+        await _storage.write(StorageKeys.userEmail, user.email!);
+      }
 
       return user;
     } on DioException catch (e) {
@@ -317,8 +323,12 @@ class AuthRepositoryImpl implements AuthRepository {
         print('✅ User ID saved: ${user.id}');
         
         print('💾 Saving user email...');
-        await _storage.write(StorageKeys.userEmail, user.email);
-        print('✅ User email saved: ${user.email}');
+        if (user.email != null) {
+          await _storage.write(StorageKeys.userEmail, user.email!);
+          print('✅ User email saved: ${user.email}');
+        } else {
+          print('⚠️  User email is null, skipping save');
+        }
 
         print('✅ All user data saved successfully');
       } catch (e) {
@@ -488,8 +498,12 @@ class AuthRepositoryImpl implements AuthRepository {
         print('✅ User ID saved: ${user.id}');
         
         print('💾 Saving user email...');
-        await _storage.write(StorageKeys.userEmail, user.email);
-        print('✅ User email saved: ${user.email}');
+        if (user.email != null) {
+          await _storage.write(StorageKeys.userEmail, user.email!);
+          print('✅ User email saved: ${user.email}');
+        } else {
+          print('⚠️  User email is null, skipping save');
+        }
       } catch (e) {
         print('❌ Error saving user data: $e');
         try {
@@ -584,7 +598,9 @@ class AuthRepositoryImpl implements AuthRepository {
       await _storage.write(StorageKeys.accessToken, accessToken.toString());
       await _storage.write(StorageKeys.refreshToken, refreshToken.toString());
       await _storage.write(StorageKeys.userId, user.id);
-      await _storage.write(StorageKeys.userEmail, user.email);
+      if (user.email != null) {
+        await _storage.write(StorageKeys.userEmail, user.email!);
+      }
 
       print('✅ Guest user data saved: id=${user.id}, email=${user.email}');
       return user;

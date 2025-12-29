@@ -11,8 +11,12 @@ import 'firebase_init.dart' if (dart.library.html) 'firebase_init_stub.dart' sho
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Инициализация Firebase только для мобильных платформ
-  await initializeFirebase();
+  try {
+    // Инициализация Firebase только для мобильных платформ
+    await initializeFirebase();
+  } catch (e) {
+    debugPrint('⚠️  Ошибка инициализации Firebase: $e');
+  }
   
   // Инициализация Push-уведомлений только для мобильных платформ
   if (!kIsWeb) {
@@ -28,6 +32,10 @@ void main() async {
     debugPrint('⚠️  API URLs не настроены!');
     debugPrint('Используйте --dart-define при запуске или обновите app_config.dart');
   }
+  
+  debugPrint('🚀 Запуск приложения...');
+  debugPrint('📱 API URL: ${AppConfig.apiBaseUrl}');
+  debugPrint('🔌 WebSocket URL: ${AppConfig.wsBaseUrl}');
   
   runApp(const KyteApp());
 }

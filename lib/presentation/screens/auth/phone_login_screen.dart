@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import '../../bloc/auth/auth_bloc.dart';
 import '../../../core/routing/app_router.dart';
+import '../../../core/config/app_config.dart';
 import 'phone_verification_screen.dart';
 
 class PhoneLoginScreen extends StatefulWidget {
@@ -76,6 +77,123 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
     }
   }
 
+  void _showErrorModal(BuildContext context, String errorMessage) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1D2631),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Индикатор перетаскивания
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Заголовок
+            const Text(
+              'Ошибка отправки SMS',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Сообщение об ошибке
+            Text(
+              errorMessage,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 24),
+            // Кнопка "Попробовать снова"
+            SizedBox(
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _handleContinue();
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF1D2631),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: const Text(
+                  'Попробовать снова',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Кнопка "Войти как гость"
+            SizedBox(
+              height: 56,
+              child: OutlinedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.read<AuthBloc>().add(AuthGuestLoginRequested());
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: BorderSide(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: const Text(
+                  'Войти как гость',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            // Кнопка "Закрыть"
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Закрыть',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            SizedBox(height: MediaQuery.of(context).viewInsets.bottom),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
@@ -91,9 +209,18 @@ class _PhoneLoginScreenState extends State<PhoneLoginScreen> {
             ),
           );
         } else if (state is AuthError) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message)),
-          );
+          // На localhost всегда открываем модальное окно ввода кода
+          if (AppConfig.isLocalhost) {
+            final phone = '+7${_phoneController.text.replaceAll(' ', '').replaceAll('(', '').replaceAll(')', '').replaceAll('-', '')}';
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => PhoneVerificationScreen(phoneNumber: phone),
+              ),
+            );
+          } else {
+            // В production показываем модальное окно с ошибкой
+            _showErrorModal(context, state.message);
+          }
         }
       },
       child: Scaffold(

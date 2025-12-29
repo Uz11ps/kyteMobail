@@ -18,7 +18,7 @@ class SettingsScreen extends StatelessWidget {
                 return ListTile(
                   leading: const Icon(Icons.person),
                   title: const Text('Профиль'),
-                  subtitle: Text(state.user.email),
+                  subtitle: Text(state.user.email ?? 'Нет email'),
                   trailing: const Icon(Icons.chevron_right),
                 );
               }
