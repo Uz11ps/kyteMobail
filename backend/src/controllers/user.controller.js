@@ -76,6 +76,28 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+// Получение пользователя по ID
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).lean();
+
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
+
+    const userResponse = {
+      ...user,
+      id: user._id.toString(),
+    };
+    delete userResponse._id;
+    res.json({ user: userResponse });
+  } catch (error) {
+    console.error('Ошибка получения пользователя:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
 // Загрузка аватара пользователя
 export const uploadAvatar = async (req, res) => {
   try {

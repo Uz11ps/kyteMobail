@@ -665,9 +665,7 @@ class _NavigationBarState extends State<_NavigationBar> {
 
   @override
   Widget build(BuildContext context) {
-    // ... code ...
-  }
-}
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       width: MediaQuery.of(context).size.width - 16, // Ширина экрана минус маленькие отступы по краям
       height: 52, // Увеличена для иконок 44px + padding

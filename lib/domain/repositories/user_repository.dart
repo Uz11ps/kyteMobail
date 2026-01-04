@@ -11,6 +11,7 @@ abstract class UserRepository {
     DateTime? birthday,
   });
   Future<String> uploadAvatar(String filePath);
+  Future<UserModel> getUserById(String id);
 }
 
 

@@ -55,6 +55,19 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
+  Future<UserModel> getUserById(String id) async {
+    try {
+      final response = await _dio.get(ApiEndpoints.getUserById(id));
+      if (response.data == null || response.data['user'] == null) {
+        throw Exception('Данные пользователя не получены');
+      }
+      return UserModel.fromJson(response.data['user']);
+    } on DioException catch (e) {
+      throw Exception(e.response?.data['message'] ?? 'Ошибка получения данных пользователя');
+    }
+  }
+
+  @override
   Future<String> uploadAvatar(String filePath) async {
     try {
       final file = File(filePath);
