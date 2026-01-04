@@ -8,6 +8,8 @@ import '../../../core/routing/app_router.dart';
 import '../../../data/models/chat_model.dart';
 import '../../widgets/ai_chat_popup.dart';
 import '../../widgets/new_project_bottom_sheet.dart';
+import '../../widgets/profile_bottom_sheet.dart';
+import '../../../core/di/service_locator.dart';
 
 class ChatsListScreen extends StatefulWidget {
   const ChatsListScreen({super.key});
@@ -43,6 +45,23 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
     );
   }
 
+  void _showProfileModal() async {
+    try {
+      final userRepository = ServiceLocator().userRepository;
+      final user = await userRepository.getCurrentUser();
+      if (mounted) {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => ProfileBottomSheet(user: user),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error loading profile: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -66,7 +85,7 @@ class _ChatsListScreenState extends State<ChatsListScreen> {
               children: [
                 _ChatsHeader(
                   onCreate: _showNewProjectModal,
-                  onProfile: () => Navigator.of(context).pushNamed(AppRouter.profile),
+                  onProfile: _showProfileModal,
                 ),
                 Expanded(
                   child: BlocBuilder<ChatBloc, ChatState>(

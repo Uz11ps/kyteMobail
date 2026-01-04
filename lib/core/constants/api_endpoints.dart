@@ -29,6 +29,8 @@ class ApiEndpoints {
   
   // Google
   static const String createGoogleMeet = '/google/meet/create';
+  static const String calendarEvents = '/google/calendar/events';
+  static String chatCalendarEvents(String chatId) => '/google/chats/$chatId/events';
   
   // User Profile
   static const String getCurrentUser = '/user/me';

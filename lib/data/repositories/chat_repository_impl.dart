@@ -152,11 +152,24 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<MessageModel> sendMessage(String chatId, String content) async {
+  Future<MessageModel> sendMessage(
+    String chatId,
+    String content, {
+    String? fileUrl,
+    String? fileName,
+    int? fileSize,
+    MessageType type = MessageType.text,
+  }) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.sendMessageToChat(chatId),
-        data: {'content': content},
+        data: {
+          'content': content,
+          'fileUrl': fileUrl,
+          'fileName': fileName,
+          'fileSize': fileSize,
+          'type': type.name,
+        },
       );
       if (response.data == null || response.data['message'] == null) {
         throw Exception('Ответ сервера не содержит данных сообщения');

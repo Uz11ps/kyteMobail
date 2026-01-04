@@ -21,14 +21,29 @@ class MessagesLoadRequested extends ChatEvent {
 class MessageSent extends ChatEvent {
   final String chatId;
   final String content;
+  final String? fileUrl;
+  final String? fileName;
+  final int? fileSize;
+  final MessageType type;
 
   const MessageSent({
     required this.chatId,
     required this.content,
+    this.fileUrl,
+    this.fileName,
+    this.fileSize,
+    this.type = MessageType.text,
   });
 
   @override
-  List<Object> get props => [chatId, content];
+  List<Object> get props => [
+        chatId,
+        content,
+        fileUrl ?? '',
+        fileName ?? '',
+        fileSize ?? 0,
+        type,
+      ];
 }
 
 class MessageReceived extends ChatEvent {

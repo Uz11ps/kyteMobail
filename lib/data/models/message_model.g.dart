@@ -15,6 +15,9 @@ MessageModel _$MessageModelFromJson(Map<String, dynamic> json) => MessageModel(
       createdAt: DateTime.parse(json['createdAt'] as String),
       userName: json['userName'] as String?,
       metadata: json['metadata'] as Map<String, dynamic>?,
+      fileUrl: json['fileUrl'] as String?,
+      fileName: json['fileName'] as String?,
+      fileSize: (json['fileSize'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
@@ -27,10 +30,15 @@ Map<String, dynamic> _$MessageModelToJson(MessageModel instance) =>
       'type': _$MessageTypeEnumMap[instance.type]!,
       'createdAt': instance.createdAt.toIso8601String(),
       'metadata': instance.metadata,
+      'fileUrl': instance.fileUrl,
+      'fileName': instance.fileName,
+      'fileSize': instance.fileSize,
     };
 
 const _$MessageTypeEnumMap = {
   MessageType.text: 'text',
   MessageType.ai: 'ai',
   MessageType.system: 'system',
+  MessageType.file: 'file',
+  MessageType.image: 'image',
 };

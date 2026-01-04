@@ -113,7 +113,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             userName: 'Вы',
             content: event.content,
             createdAt: DateTime.now(),
-            type: MessageType.text,
+            type: event.type,
+            fileUrl: event.fileUrl,
+            fileName: event.fileName,
+            fileSize: event.fileSize,
           );
           emit(MessagesLoaded(messages: [...currentState.messages, testMessage]));
         } else {
@@ -122,7 +125,14 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         return;
       }
       
-      final message = await chatRepository.sendMessage(event.chatId, event.content);
+      final message = await chatRepository.sendMessage(
+        event.chatId,
+        event.content,
+        fileUrl: event.fileUrl,
+        fileName: event.fileName,
+        fileSize: event.fileSize,
+        type: event.type,
+      );
       // Добавляем сообщение в список и перезагружаем историю для синхронизации
       final currentState = state;
       if (currentState is MessagesLoaded) {
@@ -147,7 +157,10 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
             userName: 'Вы',
             content: event.content,
             createdAt: DateTime.now(),
-            type: MessageType.text,
+            type: event.type,
+            fileUrl: event.fileUrl,
+            fileName: event.fileName,
+            fileSize: event.fileSize,
           );
           emit(MessagesLoaded(messages: [...currentState.messages, testMessage]));
         }

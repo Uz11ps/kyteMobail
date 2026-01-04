@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
@@ -80,7 +81,7 @@ class _AIChatPopupState extends State<AIChatPopup> {
     try {
       FilePickerResult? result;
       
-      if (Platform.isAndroid || Platform.isIOS) {
+      if (!kIsWeb) {
         result = await FilePicker.platform.pickFiles(
           type: FileType.any,
           allowMultiple: false,
@@ -156,7 +157,16 @@ class _AIChatPopupState extends State<AIChatPopup> {
       reader.readAsArrayBuffer(file);
       await reader.onLoadEnd.first;
       
-      final bytes = reader.result as ByteBuffer;
+      final result = reader.result;
+      Uint8List uint8list;
+      if (result is Uint8List) {
+        uint8list = result;
+      } else if (result is ByteBuffer) {
+        uint8list = result.asUint8List();
+      } else {
+        throw Exception('Неподдерживаемый формат результата FileReader');
+      }
+      
       final fileName = file.name;
       
       if (_aiChatId == null) {
@@ -172,7 +182,7 @@ class _AIChatPopupState extends State<AIChatPopup> {
 
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(
-          bytes.asUint8List(),
+          uint8list,
           filename: fileName,
         ),
       });

@@ -35,7 +35,7 @@ Write-Host ""
 Write-Host "📝 Обновление CORS_ORIGIN..." -ForegroundColor Yellow
 
 # Команда для обновления CORS_ORIGIN
-$corsValue = "http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085"
+$corsValue = "http://94.131.88.135,http://localhost:8080,http://localhost:8081,http://localhost:8082,http://localhost:8083,http://localhost:8084,http://localhost:8085"
 
 $updateCommand = @"
 cd $backendPath

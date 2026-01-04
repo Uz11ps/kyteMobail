@@ -9,6 +9,10 @@ enum MessageType {
   ai,
   @JsonValue('system')
   system,
+  @JsonValue('file')
+  file,
+  @JsonValue('image')
+  image,
 }
 
 @JsonSerializable()
@@ -21,6 +25,9 @@ class MessageModel {
   final MessageType type;
   final DateTime createdAt;
   final Map<String, dynamic>? metadata;
+  final String? fileUrl;
+  final String? fileName;
+  final int? fileSize;
 
   MessageModel({
     required this.id,
@@ -31,6 +38,9 @@ class MessageModel {
     required this.createdAt,
     this.userName,
     this.metadata,
+    this.fileUrl,
+    this.fileName,
+    this.fileSize,
   });
 
   factory MessageModel.fromJson(Map<String, dynamic> json) =>
@@ -40,5 +50,7 @@ class MessageModel {
 
   bool get isAIMessage => type == MessageType.ai;
   bool get isSystemMessage => type == MessageType.system;
+  bool get isFileMessage => type == MessageType.file;
+  bool get isImageMessage => type == MessageType.image;
 }
 

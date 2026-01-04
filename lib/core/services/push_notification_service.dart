@@ -87,7 +87,7 @@ class PushNotificationService {
     );
 
     // Настройка канала для Android
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         'high_importance_channel',
         'High Importance Notifications',

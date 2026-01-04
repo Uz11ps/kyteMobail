@@ -15,9 +15,6 @@ class ApiClient {
         baseUrl: _normalizeApiBaseUrl(AppConfig.apiBaseUrl),
         connectTimeout: const Duration(seconds: 30), // Увеличено для стабильности
         receiveTimeout: const Duration(seconds: 30), // Увеличено для стабильности
-        headers: {
-          'Content-Type': 'application/json',
-        },
       ),
     );
 

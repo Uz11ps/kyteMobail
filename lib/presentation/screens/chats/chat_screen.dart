@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:file_picker/file_picker.dart';
@@ -19,6 +20,10 @@ import '../../../core/storage/storage_service.dart';
 import '../../../core/constants/api_endpoints.dart';
 import '../../widgets/edit_chat_bottom_sheet.dart';
 import '../../widgets/calendar_bottom_sheet.dart';
+import '../../widgets/files_bottom_sheet.dart';
+import '../../widgets/chat_details_bottom_sheet.dart';
+import '../../widgets/user_profile_bottom_sheet.dart';
+import '../../widgets/profile_bottom_sheet.dart';
 import 'dart:convert';
 
 class ChatScreen extends StatefulWidget {
@@ -45,6 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
   String? _currentUserId;
   int? _fileCount;
   ChatModel? _chat;
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -240,9 +246,17 @@ class _ChatScreenState extends State<ChatScreen> {
                         }
 
                         // Используем сообщения из state, если они есть, иначе из локального списка
-                        final messagesToShow = state is MessagesLoaded ? state.messages : _messages;
+                        var messagesToShow = state is MessagesLoaded ? state.messages : _messages;
                         
-                        debugPrint('📋 Building ListView with ${messagesToShow.length} messages');
+                        // Применяем поиск, если он активен
+                        if (_searchQuery.isNotEmpty) {
+                          messagesToShow = messagesToShow.where((m) => 
+                            (m.content?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false) ||
+                            (m.fileName?.toLowerCase().contains(_searchQuery.toLowerCase()) ?? false)
+                          ).toList();
+                        }
+                        
+                        debugPrint('📋 Building ListView with ${messagesToShow.length} messages (search: "$_searchQuery")');
 
                         if (messagesToShow.isEmpty) {
                           return Center(
@@ -256,16 +270,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ),
                                 const SizedBox(height: 16),
                                 Text(
-                                  'Нет сообщений',
+                                  _searchQuery.isEmpty ? 'Нет сообщений' : 'Ничего не найдено',
                                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                                         color: Colors.white.withOpacity(0.7),
-                                      ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Начните переписку',
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: Colors.white.withOpacity(0.5),
                                       ),
                                 ),
                               ],
@@ -316,11 +323,18 @@ class _ChatScreenState extends State<ChatScreen> {
                                   memberCount: _memberCount,
                                   chat: _chat,
                                 ),
-                                _NavigationBar(
-                                  chatCount: _messages.length,
-                                  fileCount: _fileCount ?? 0,
-                                  meetingsCount: _chat?.meetingsCount ?? 0,
-                                ),
+          _NavigationBar(
+            chatId: widget.chatId,
+            chatName: widget.chatName,
+            chatCount: _messages.length,
+            fileCount: _fileCount ?? 0,
+            meetingsCount: _chat?.meetingsCount ?? 0,
+            onSearchChanged: (query) {
+              setState(() {
+                _searchQuery = query;
+              });
+            },
+          ),
                                 // Отступ 20px ниже навигационной панели
                                 const SizedBox(height: 20),
                               ],
@@ -459,27 +473,39 @@ class _ChatHeader extends StatelessWidget {
           ),
           // Текст по центру
           Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  chatName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 18,
+            child: GestureDetector(
+              onTap: () {
+                if (chat != null) {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => ChatDetailsBottomSheet(chat: chat!),
+                  );
+                }
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    chatName,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-                Text(
-                  memberCount != null 
-                      ? '$memberCount ${_getMemberText(memberCount!)}'
-                      : 'Загрузка...',
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 14,
+                  Text(
+                    memberCount != null 
+                        ? '$memberCount ${_getMemberText(memberCount!)}'
+                        : 'Загрузка...',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 14,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           // Аватар справа
@@ -497,7 +523,7 @@ class _ChatHeader extends StatelessWidget {
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
-                        builder: (context) => EditChatBottomSheet(chat: chat!),
+                        builder: (context) => ChatDetailsBottomSheet(chat: chat!),
                       );
                     } else {
                       // Если чат еще не загружен, создаем временный объект
@@ -512,7 +538,7 @@ class _ChatHeader extends StatelessWidget {
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
-                        builder: (context) => EditChatBottomSheet(chat: tempChat),
+                        builder: (context) => ChatDetailsBottomSheet(chat: tempChat),
                       );
                     }
                   },
@@ -597,14 +623,20 @@ class _DiagonalStripePainter extends CustomPainter {
 }
 
 class _NavigationBar extends StatefulWidget {
+  final String chatId;
+  final String chatName;
   final int chatCount;
   final int fileCount;
   final int meetingsCount;
+  final Function(String) onSearchChanged;
 
   const _NavigationBar({
+    required this.chatId,
+    required this.chatName,
     required this.chatCount,
     required this.fileCount,
     required this.meetingsCount,
+    required this.onSearchChanged,
   });
 
   @override
@@ -626,21 +658,16 @@ class _NavigationBarState extends State<_NavigationBar> {
       _isSearchMode = !_isSearchMode;
       if (!_isSearchMode) {
         _searchController.clear();
+        widget.onSearchChanged('');
       }
     });
-    if (_isSearchMode) {
-      // Фокусируем поле ввода после небольшой задержки
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted && _isSearchMode) {
-          FocusScope.of(context).requestFocus(FocusNode());
-        }
-      });
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    // ... code ...
+  }
+}
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       width: MediaQuery.of(context).size.width - 16, // Ширина экрана минус маленькие отступы по краям
       height: 52, // Увеличена для иконок 44px + padding
@@ -707,12 +734,18 @@ class _NavigationBarState extends State<_NavigationBar> {
                   Expanded(
                     child: TextField(
                       controller: _searchController,
+                      onChanged: widget.onSearchChanged,
                       autofocus: true,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                       ),
                       decoration: const InputDecoration(
+                        hintText: 'search',
+                        hintStyle: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 16,
+                        ),
                         filled: false,
                         fillColor: Colors.transparent,
                         border: InputBorder.none,
@@ -760,7 +793,6 @@ class _NavigationBarState extends State<_NavigationBar> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Календарь с бейджем
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -769,7 +801,13 @@ class _NavigationBarState extends State<_NavigationBar> {
                             context: context,
                             isScrollControlled: true,
                             backgroundColor: Colors.transparent,
-                            builder: (context) => const CalendarBottomSheet(),
+                          builder: (context) => CalendarBottomSheet(
+                            chatId: widget.chatId,
+                            chatName: widget.chatName,
+                            meetingsCount: widget.meetingsCount,
+                            chatCount: widget.chatCount,
+                            fileCount: widget.fileCount,
+                          ),
                           );
                         },
                         borderRadius: BorderRadius.circular(1000),
@@ -780,9 +818,27 @@ class _NavigationBarState extends State<_NavigationBar> {
                       ),
                     ),
                     // Документ с бейджем
-                    _ChatTabIcon(
-                      svg: _navIconDocument,
-                      badgeValue: widget.fileCount > 0 ? widget.fileCount.toString() : null,
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            isScrollControlled: true,
+                            backgroundColor: Colors.transparent,
+                            builder: (context) => FilesBottomSheet(
+                              chatId: widget.chatId,
+                              chatName: widget.chatName,
+                              fileCount: widget.fileCount,
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(1000),
+                        child: _ChatTabIcon(
+                          svg: _navIconDocument,
+                          badgeValue: widget.fileCount > 0 ? widget.fileCount.toString() : null,
+                        ),
+                      ),
                     ),
                     // Поиск
                     Material(
@@ -1012,6 +1068,123 @@ class _NavIcon extends StatelessWidget {
   }
 }
 
+class _FilePreviewScreen extends StatelessWidget {
+  final MessageModel message;
+
+  const _FilePreviewScreen({required this.message});
+
+  String _formatFileSize(int? bytes) {
+    if (bytes == null) return '';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ext = message.fileName?.split('.').last.toLowerCase() ?? '';
+    final canPreview = ['pdf', 'jpg', 'jpeg', 'png', 'txt'].contains(ext);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFF161B22),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.white, size: 20),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        title: Column(
+          children: [
+            Text(
+              message.fileName ?? 'File',
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              _formatFileSize(message.fileSize).toLowerCase(),
+              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+            ),
+          ],
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.ios_share, color: Colors.white, size: 24),
+            onPressed: () {
+              // В реальном приложении тут Share.share(message.fileUrl!)
+            },
+          ),
+        ],
+      ),
+      body: Center(
+        child: canPreview 
+          ? _buildPreview(context, ext)
+          : _buildNoPreview(context),
+      ),
+    );
+  }
+
+  Widget _buildPreview(BuildContext context, String ext) {
+    // В реальном приложении тут будет PDFView или Image.network
+    if (['jpg', 'jpeg', 'png'].contains(ext)) {
+      return Image.network(message.fileUrl!);
+    }
+    
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.description, size: 100, color: Colors.white24),
+        const SizedBox(height: 20),
+        Text(
+          'Preview for .$ext is coming soon',
+          style: const TextStyle(color: Colors.white70),
+        ),
+        const SizedBox(height: 40),
+        _buildSaveButton(context),
+      ],
+    );
+  }
+
+  Widget _buildNoPreview(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _FileIcon(fileName: message.fileName ?? '', isDownloaded: true),
+        const SizedBox(height: 24),
+        const Text(
+          "I can't display\nthe file's content",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const SizedBox(height: 32),
+        _buildSaveButton(context),
+      ],
+    );
+  }
+
+  Widget _buildSaveButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        // Логика сохранения
+      },
+      icon: const Icon(Icons.ios_share, size: 20),
+      label: const Text('Save or share'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(0.1),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(100),
+        ),
+      ),
+    );
+  }
+}
+
 // SVG иконки для навигационной панели
 const String _navIconChat = '''
 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1090,6 +1263,250 @@ class _StatCountBadge extends StatelessWidget {
   }
 }
 
+class _FileIcon extends StatelessWidget {
+  final String fileName;
+  final bool isDownloaded;
+  final double? downloadProgress;
+  final VoidCallback? onTap;
+
+  const _FileIcon({
+    required this.fileName,
+    this.isDownloaded = false,
+    this.downloadProgress,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFF425671).withOpacity(0.8),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(
+                _getIconForFile(fileName),
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+          if (!isDownloaded && downloadProgress == null)
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF161B22),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.arrow_downward,
+                  color: Colors.white,
+                  size: 14,
+                ),
+              ),
+            ),
+          if (downloadProgress != null && downloadProgress! < 1.0)
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: CircularProgressIndicator(
+                value: downloadProgress,
+                strokeWidth: 2,
+                valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  IconData _getIconForFile(String fileName) {
+    final ext = fileName.split('.').last.toLowerCase();
+    switch (ext) {
+      case 'pdf':
+        return Icons.picture_as_pdf;
+      case 'doc':
+      case 'docx':
+        return Icons.description;
+      case 'xls':
+      case 'xlsx':
+        return Icons.table_chart;
+      case 'zip':
+      case 'rar':
+      case '7z':
+        return Icons.folder_zip;
+      default:
+        return Icons.insert_drive_file_outlined;
+    }
+  }
+}
+
+class _FileMessage extends StatelessWidget {
+  final MessageModel message;
+  final String time;
+  final bool isCurrentUser;
+
+  const _FileMessage({
+    required this.message,
+    required this.time,
+    required this.isCurrentUser,
+  });
+
+  String _formatFileSize(int? bytes) {
+    if (bytes == null) return '';
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _FileIcon(
+          fileName: message.fileName ?? 'file',
+          isDownloaded: false, // В реальном приложении тут проверка локального файла
+          onTap: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => _FilePreviewScreen(message: message),
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 12),
+        Flexible(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                message.fileName ?? 'Unnamed file',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _formatFileSize(message.fileSize),
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    time,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ImageMessage extends StatelessWidget {
+  final MessageModel message;
+  final String time;
+
+  const _ImageMessage({
+    required this.message,
+    required this.time,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Stack(
+            children: [
+              Image.network(
+                message.fileUrl!,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    height: 200,
+                    color: Colors.white.withOpacity(0.05),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) {
+                  return Container(
+                    height: 200,
+                    color: Colors.white.withOpacity(0.05),
+                    child: const Icon(Icons.broken_image, color: Colors.white24),
+                  );
+                },
+              ),
+              Positioned(
+                right: 8,
+                bottom: 8,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    time,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (message.content.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            message.content,
+            style: const TextStyle(color: Colors.white),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _MessageItem extends StatelessWidget {
   final MessageModel message;
   final String? currentUserId;
@@ -1101,6 +1518,20 @@ class _MessageItem extends StatelessWidget {
 
   String _formatTime(DateTime dateTime) {
     return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildMessageContent(BuildContext context, MessageModel message, String time, bool isCurrentUser) {
+    if (message.isImageMessage && message.fileUrl != null) {
+      return _ImageMessage(message: message, time: time);
+    } else if (message.isFileMessage && (message.fileUrl != null || message.fileName != null)) {
+      return _FileMessage(message: message, time: time, isCurrentUser: isCurrentUser);
+    }
+    return Text(
+      message.content,
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: Colors.white.withOpacity(0.9),
+          ),
+    );
   }
 
   String _getInitials(String? name) {
@@ -1178,17 +1609,126 @@ class _MessageItem extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    // Текст сообщения
+                    // Текст или файл
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 20),
+                      padding: EdgeInsets.only(
+                        bottom: message.isImageMessage ? 0 : 20,
+                      ),
+                      child: _buildMessageContent(context, message, time, isCurrentUser),
+                    ),
+                    // Время в правом нижнем углу (только для текста и файлов)
+                    if (!message.isImageMessage && !message.isFileMessage)
+                      Positioned(
+                        right: 0,
+                        bottom: 0,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              time,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Colors.white.withOpacity(0.5),
+                                    fontSize: 11,
+                                  ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              Icons.done_all,
+                              size: 14,
+                              color: Colors.white.withOpacity(0.6),
+                            ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Для сообщений от других пользователей - с аватаром слева внизу и хвостом
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Аватар внизу слева
+          GestureDetector(
+            onTap: () async {
+              try {
+                final userRepository = ServiceLocator().userRepository;
+                final user = await userRepository.getUserById(message.userId);
+                if (context.mounted) {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => UserProfileBottomSheet(user: user),
+                  );
+                }
+              } catch (e) {
+                debugPrint('Error opening user profile: $e');
+              }
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: _getAvatarColor(message.userId),
+              ),
+              child: Center(
+                child: isAIMessage
+                    ? const Icon(Icons.check, color: Colors.white, size: 20)
+                    : Text(
+                        _getInitials(userName),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Сообщение
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: messageBackgroundColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Stack(
+                children: [
+                  // Текст или файл
+                  Padding(
+                    padding: EdgeInsets.only(
+                      top: showUserName ? 18 : 0,
+                      bottom: message.isImageMessage ? 0 : 20,
+                    ),
+                    child: _buildMessageContent(context, message, time, isCurrentUser),
+                  ),
+                  // Никнейм в левом верхнем углу
+                  if (showUserName)
+                    Positioned(
+                      left: 0,
+                      top: 0,
                       child: Text(
-                        message.content,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.9),
+                        userName,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: nameColor,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
                             ),
                       ),
                     ),
-                    // Время в правом нижнем углу
+                  // Время в правом нижнем углу
+                  if (!message.isImageMessage && !message.isFileMessage)
                     Positioned(
                       right: 0,
                       bottom: 0,
@@ -1211,103 +1751,6 @@ class _MessageItem extends StatelessWidget {
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    // Для сообщений от других пользователей - с аватаром слева внизу и хвостом
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          // Аватар внизу слева
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _getAvatarColor(message.userId),
-            ),
-            child: Center(
-              child: isAIMessage
-                  ? const Icon(Icons.check, color: Colors.white, size: 20)
-                  : Text(
-                      _getInitials(userName),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Сообщение
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: messageBackgroundColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Stack(
-                children: [
-                  // Текст сообщения
-                  Padding(
-                    padding: EdgeInsets.only(
-                      top: showUserName ? 18 : 0,
-                      bottom: 20,
-                    ),
-                    child: Text(
-                      message.content,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
-                          ),
-                    ),
-                  ),
-                  // Никнейм в левом верхнем углу
-                  if (showUserName)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      child: Text(
-                        userName,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: nameColor,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                      ),
-                    ),
-                  // Время в правом нижнем углу
-                  Positioned(
-                    right: 0,
-                    bottom: 0,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          time,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.white.withOpacity(0.5),
-                                fontSize: 11,
-                              ),
-                        ),
-                        const SizedBox(width: 4),
-                        Icon(
-                          Icons.done_all,
-                          size: 14,
-                          color: Colors.white.withOpacity(0.6),
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -1366,7 +1809,7 @@ class _InputBarState extends State<_InputBar> {
     try {
       FilePickerResult? result;
       
-      if (Platform.isAndroid || Platform.isIOS) {
+      if (!kIsWeb) {
         result = await FilePicker.platform.pickFiles(
           type: FileType.any,
           allowMultiple: false,
@@ -1404,7 +1847,14 @@ class _InputBarState extends State<_InputBar> {
     try {
       final file = File(filePath);
       final fileName = file.path.split('/').last;
+      final fileSize = await file.length();
       
+      final isImage = fileName.toLowerCase().endsWith('.jpg') ||
+          fileName.toLowerCase().endsWith('.jpeg') ||
+          fileName.toLowerCase().endsWith('.png') ||
+          fileName.toLowerCase().endsWith('.gif') ||
+          fileName.toLowerCase().endsWith('.webp');
+
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(
           filePath,
@@ -1425,17 +1875,17 @@ class _InputBarState extends State<_InputBar> {
         
         // Отправляем сообщение с файлом
         final messageContent = widget.controller.text.trim();
-        if (messageContent.isNotEmpty || fileUrl != null) {
-          context.read<ChatBloc>().add(
-            MessageSent(
-              chatId: widget.chatId,
-              content: messageContent.isNotEmpty 
-                  ? '$messageContent\n📎 $fileName'
-                  : '📎 $fileName',
-            ),
-          );
-          widget.controller.clear();
-        }
+        context.read<ChatBloc>().add(
+          MessageSent(
+            chatId: widget.chatId,
+            content: messageContent,
+            fileUrl: fileUrl,
+            fileName: fileName,
+            fileSize: fileSize,
+            type: isImage ? MessageType.image : MessageType.file,
+          ),
+        );
+        widget.controller.clear();
       }
     } catch (e) {
       debugPrint('Ошибка загрузки файла: $e');
@@ -1449,12 +1899,28 @@ class _InputBarState extends State<_InputBar> {
       reader.readAsArrayBuffer(file);
       await reader.onLoadEnd.first;
       
-      final bytes = reader.result as ByteBuffer;
-      final fileName = file.name;
+      final result = reader.result;
+      Uint8List uint8list;
+      if (result is Uint8List) {
+        uint8list = result;
+      } else if (result is ByteBuffer) {
+        uint8list = result.asUint8List();
+      } else {
+        throw Exception('Неподдерживаемый формат результата FileReader');
+      }
       
+      final fileName = file.name;
+      final fileSize = file.size;
+      
+      final isImage = fileName.toLowerCase().endsWith('.jpg') ||
+          fileName.toLowerCase().endsWith('.jpeg') ||
+          fileName.toLowerCase().endsWith('.png') ||
+          fileName.toLowerCase().endsWith('.gif') ||
+          fileName.toLowerCase().endsWith('.webp');
+
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(
-          bytes.asUint8List(),
+          uint8list,
           filename: fileName,
         ),
       });
@@ -1472,17 +1938,17 @@ class _InputBarState extends State<_InputBar> {
         
         // Отправляем сообщение с файлом
         final messageContent = widget.controller.text.trim();
-        if (messageContent.isNotEmpty || fileUrl != null) {
-          context.read<ChatBloc>().add(
-            MessageSent(
-              chatId: widget.chatId,
-              content: messageContent.isNotEmpty 
-                  ? '$messageContent\n📎 $fileName'
-                  : '📎 $fileName',
-            ),
-          );
-          widget.controller.clear();
-        }
+        context.read<ChatBloc>().add(
+          MessageSent(
+            chatId: widget.chatId,
+            content: messageContent,
+            fileUrl: fileUrl,
+            fileName: fileName,
+            fileSize: fileSize,
+            type: isImage ? MessageType.image : MessageType.file,
+          ),
+        );
+        widget.controller.clear();
       }
     } catch (e) {
       debugPrint('Ошибка загрузки файла: $e');
@@ -1517,26 +1983,35 @@ class _InputBarState extends State<_InputBar> {
           ),
           // Контент в стиле Telegram
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               // Кнопка сердца
-              _GlassButton(
-                svg: _inputIconHeart,
-                onPressed: widget.onHeartPressed ?? () {},
+              Padding(
+                padding: const EdgeInsets.only(bottom: 0),
+                child: _GlassButton(
+                  svg: _inputIconHeart,
+                  onPressed: widget.onHeartPressed ?? () {},
+                ),
               ),
               const SizedBox(width: 8),
               // Кнопка плюса для прикрепления файлов
-              _GlassButton(
-                icon: Icons.add,
-                onPressed: _pickAndUploadFile,
+              Padding(
+                padding: const EdgeInsets.only(bottom: 0),
+                child: _GlassButton(
+                  icon: Icons.add,
+                  onPressed: _pickAndUploadFile,
+                ),
               ),
               const SizedBox(width: 8),
               // Поле ввода
               Expanded(
-                child: _GlassInputField(
-                  controller: widget.controller,
-                  onSend: widget.onSend,
-                  hasText: _hasText,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 0),
+                  child: _GlassInputField(
+                    controller: widget.controller,
+                    onSend: widget.onSend,
+                    hasText: _hasText,
+                  ),
                 ),
               ),
             ],
@@ -1681,10 +2156,14 @@ class _GlassInputFieldState extends State<_GlassInputField> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
+    return Container(
+      constraints: const BoxConstraints(
+        minHeight: 36,
+        maxHeight: 150, // Ограничиваем максимальную высоту
+      ),
       child: Stack(
         clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter, // Чтобы росло вверх
         children: [
           // Backdrop blur
           Positioned.fill(
@@ -1762,33 +2241,30 @@ class _GlassInputFieldState extends State<_GlassInputField> {
                 borderRadius: BorderRadius.circular(18),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: EdgeInsets.only(
-                left: 16,
-                right: widget.hasText ? 48 : 16, // Отступ справа для кнопки
-                top: 10,
-                bottom: 10,
-              ),
-              isDense: true,
+            contentPadding: EdgeInsets.only(
+              left: 16,
+              right: widget.hasText ? 44 : 16, // Отступ справа для кнопки
+              top: 8,
+              bottom: 8,
             ),
-            maxLines: null,
-            minLines: 1,
-            textCapitalization: TextCapitalization.sentences,
-            textAlignVertical: TextAlignVertical.bottom,
-            scrollController: _scrollController,
-            onSubmitted: (_) => widget.onSend(),
+            isDense: true,
           ),
-          // Кнопка отправки внутри поля ввода (показывается только когда есть текст)
-          if (widget.hasText)
-            Positioned(
-              right: 4,
-              top: 0,
-              bottom: 0,
-              child: Center(
-                child: _SendButton(
-                  onPressed: widget.onSend,
-                ),
-              ),
+          maxLines: 5, // Ограничиваем количество строк до 5, потом будет скролл
+          minLines: 1,
+          textCapitalization: TextCapitalization.sentences,
+          textAlignVertical: TextAlignVertical.center,
+          scrollController: _scrollController,
+          onSubmitted: (_) => widget.onSend(),
+        ),
+        // Кнопка отправки внутри поля ввода
+        if (widget.hasText)
+          Positioned(
+            right: 4,
+            bottom: 4, // Прижимаем к низу, чтобы не растягивалась
+            child: _SendButton(
+              onPressed: widget.onSend,
             ),
+          ),
         ],
       ),
     );
@@ -1896,7 +2372,7 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
     try {
       FilePickerResult? result;
       
-      if (Platform.isAndroid || Platform.isIOS) {
+      if (!kIsWeb) {
         result = await FilePicker.platform.pickFiles(
           type: FileType.any,
           allowMultiple: false,
@@ -1982,7 +2458,16 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
       reader.readAsArrayBuffer(file);
       await reader.onLoadEnd.first;
       
-      final bytes = reader.result as ByteBuffer;
+      final result = reader.result;
+      Uint8List uint8list;
+      if (result is Uint8List) {
+        uint8list = result;
+      } else if (result is ByteBuffer) {
+        uint8list = result.asUint8List();
+      } else {
+        throw Exception('Неподдерживаемый формат результата FileReader');
+      }
+      
       final fileName = file.name;
       
       // Получаем AI chatId
@@ -1999,7 +2484,7 @@ class _PopupChatWidgetState extends State<_PopupChatWidget> {
 
       final formData = FormData.fromMap({
         'file': MultipartFile.fromBytes(
-          bytes.asUint8List(),
+          uint8list,
           filename: fileName,
         ),
       });
