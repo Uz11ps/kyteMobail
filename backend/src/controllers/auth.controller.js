@@ -1,5 +1,6 @@
 import { User } from '../models/User.js';
 import { PhoneVerification } from '../models/PhoneVerification.js';
+import { EmailVerification } from '../models/EmailVerification.js';
 import { generateTokens, verifyToken } from '../utils/jwt.js';
 import { encrypt } from '../utils/encryption.js';
 import { smsService } from '../services/sms.service.js';
@@ -29,8 +30,15 @@ export const login = async (req, res) => {
         return res.status(401).json({ message: 'Пользователь не найден' });
       }
       // В реальном приложении здесь должна быть проверка кода через SMS сервис
+    } else if (email && code) {
+       // Вход по email/коду
+       user = await User.findOne({ email: email.toLowerCase() });
+       if (!user) {
+         return res.status(401).json({ message: 'Пользователь не найден' });
+       }
+       // Здесь должна быть проверка кода (валидация должна проходить до вызова login)
     } else {
-      return res.status(400).json({ message: 'Необходимо указать email/пароль или телефон/код' });
+      return res.status(400).json({ message: 'Необходимо указать email/пароль или телефон/код или email/код' });
     }
 
     const { accessToken, refreshToken } = generateTokens(user._id.toString());
@@ -441,6 +449,145 @@ export const sendTestEmail = async (req, res) => {
   } catch (error) {
     console.error('Ошибка в sendTestEmail:', error);
     res.status(500).json({ message: 'Внутренняя ошибка сервера' });
+  }
+};
+
+
+/**
+ * Отправка Email кода для регистрации/входа
+ * POST /api/auth/email/send-code
+ */
+export const sendEmailCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email не указан' });
+    }
+
+    const normalizedEmail = email.toLowerCase();
+
+    // Проверка лимита (3 кода в час)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentCodes = await EmailVerification.countDocuments({
+      email: normalizedEmail,
+      createdAt: { $gte: oneHourAgo },
+    });
+
+    if (recentCodes >= 10) { // Чуть мягче лимит для email
+      return res.status(429).json({ 
+        message: 'Превышен лимит запросов. Попробуйте позже.' 
+      });
+    }
+
+    // Генерируем код
+    const code = EmailVerification.generateCode();
+
+    // Удаляем старые коды
+    await EmailVerification.deleteMany({
+      email: normalizedEmail,
+      verified: false,
+    });
+
+    // Создаем запись
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 минут
+    const verification = new EmailVerification({
+      email: normalizedEmail,
+      code,
+      expiresAt,
+    });
+    await verification.save();
+
+    // Отправляем Email
+    const emailResult = await emailService.sendEmail(
+      normalizedEmail,
+      'Код подтверждения Kyte',
+      \Ваш код подтверждения: \\,
+      \<div style='font-family: sans-serif;'>
+         <h2>Kyte Verification</h2>
+         <p>Ваш код подтверждения: <b style='font-size: 24px;'>\</b></p>
+         <p>Код действителен 10 минут.</p>
+       </div>\
+    );
+
+    if (!emailResult.success) {
+      return res.status(500).json({ message: 'Ошибка отправки email' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Код отправлен на email',
+      expiresIn: 600
+    });
+
+  } catch (error) {
+    console.error('Ошибка отправки Email кода:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
+/**
+ * Проверка Email кода
+ * POST /api/auth/email/verify-code
+ */
+export const verifyEmailCode = async (req, res) => {
+  try {
+    const { email, code, name } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ message: 'Email и код обязательны' });
+    }
+
+    const normalizedEmail = email.toLowerCase();
+
+    // Ищем верификацию
+    const verification = await EmailVerification.findOne({
+      email: normalizedEmail,
+      verified: false,
+    }).sort({ createdAt: -1 });
+
+    if (!verification) {
+      return res.status(400).json({ message: 'Код не найден или истек' });
+    }
+
+    const verifyResult = verification.verifyCode(code);
+    await verification.save();
+
+    if (!verifyResult.success) {
+      return res.status(400).json({
+        message: verifyResult.message,
+        attemptsLeft: verifyResult.attemptsLeft
+      });
+    }
+
+    // Ищем или создаем пользователя
+    let user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      user = new User({
+        email: normalizedEmail,
+        name: name || normalizedEmail.split('@')[0],
+      });
+      await user.save();
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user._id.toString());
+    await EmailVerification.deleteOne({ _id: verification._id });
+
+    res.json({
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        phone: user.phone,
+        name: user.name,
+        avatarUrl: user.avatarUrl,
+      },
+      accessToken,
+      refreshToken,
+    });
+
+  } catch (error) {
+    console.error('Ошибка верификации Email кода:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 };
 
