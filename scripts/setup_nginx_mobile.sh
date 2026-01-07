@@ -22,8 +22,14 @@ server {
         alias /var/www/kyte-mobile/web;
         try_files $uri $uri/ /mobail/index.html;
         
-        # Кеширование статических файлов
-        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        # ОТКЛЮЧАЕМ КЭШ для критически важных файлов
+        location ~* (index\.html|main\.dart\.js|flutter\.js)$ {
+            add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0";
+            expires -1;
+        }
+
+        # Кеширование остальных статических файлов
+        location ~* \.(css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
             expires 1y;
             add_header Cache-Control "public, immutable";
         }

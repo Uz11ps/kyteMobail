@@ -35,3 +35,7 @@ class AuthPhoneCodeSent extends AuthState {
   const AuthPhoneCodeSent();
 }
 
+class AuthEmailCodeSent extends AuthState {
+  const AuthEmailCodeSent();
+}
+

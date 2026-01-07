@@ -19,9 +19,7 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: function() {
-      return !this.phone && !this.googleId; // Пароль не обязателен если есть телефон или Google ID
-    },
+    required: false,
   },
   name: {
     type: String,
@@ -84,4 +82,5 @@ userSchema.methods.toJSON = function() {
 };
 
 export const User = mongoose.model('User', userSchema);
+
 

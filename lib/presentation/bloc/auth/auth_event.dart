@@ -97,5 +97,27 @@ class AuthPhoneLoginRequested extends AuthEvent {
   List<Object> get props => [phone, code];
 }
 
+class AuthEmailCodeSendRequested extends AuthEvent {
+  final String email;
+
+  const AuthEmailCodeSendRequested({required this.email});
+
+  @override
+  List<Object> get props => [email];
+}
+
+class AuthEmailLoginRequested extends AuthEvent {
+  final String email;
+  final String code;
+
+  const AuthEmailLoginRequested({
+    required this.email,
+    required this.code,
+  });
+
+  @override
+  List<Object> get props => [email, code];
+}
+
 class AuthGuestLoginRequested extends AuthEvent {}
 

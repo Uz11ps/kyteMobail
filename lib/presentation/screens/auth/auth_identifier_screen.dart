@@ -42,8 +42,11 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
   }
 
   void _handleContinue() {
-    if (_formKey.currentState!.validate()) {
+    print('🚀 AuthIdentifierScreen: Continue button pressed');
+    // Using simple validation since we use TextField not TextFormField
+    if (_isValid) {
       final identifier = _identifierController.text.trim();
+      print('🚀 AuthIdentifierScreen: Valid identifier: $identifier');
       
       // If adding phone, we might want to normalize it
       String finalIdentifier = identifier;
@@ -51,6 +54,7 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
         finalIdentifier = '+7$identifier';
       }
 
+      print('🚀 AuthIdentifierScreen: Navigating to PhoneVerificationScreen');
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => PhoneVerificationScreen(
@@ -60,6 +64,8 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
           ),
         ),
       );
+    } else {
+      print('🚀 AuthIdentifierScreen: Invalid identifier');
     }
   }
 

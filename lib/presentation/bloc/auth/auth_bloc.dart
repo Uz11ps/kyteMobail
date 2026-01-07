@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import '../../../data/models/user_model.dart';
+import '../../../core/network/api_client.dart';
 
 part 'auth_event.dart';
 part 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository authRepository;
+  StreamSubscription? _authExpiredSubscription;
 
   AuthBloc({required this.authRepository}) : super(AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
@@ -17,8 +20,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthPhoneCodeSendRequested>(_onAuthPhoneCodeSendRequested);
     on<AuthPhoneRegisterRequested>(_onAuthPhoneRegisterRequested);
     on<AuthPhoneLoginRequested>(_onAuthPhoneLoginRequested);
+    on<AuthEmailCodeSendRequested>(_onAuthEmailCodeSendRequested);
+    on<AuthEmailLoginRequested>(_onAuthEmailLoginRequested);
     on<AuthGuestLoginRequested>(_onAuthGuestLoginRequested);
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
+
+    // Слушаем уведомления об истечении сессии
+    _authExpiredSubscription = ApiClient.authExpired.listen((_) {
+      add(AuthLogoutRequested());
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _authExpiredSubscription?.cancel();
+    return super.close();
   }
 
   Future<void> _onAuthCheckRequested(
@@ -170,6 +186,46 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       final user = await authRepository.loginWithPhone(
         event.phone,
+        event.code,
+      );
+      emit(AuthAuthenticated(user: user));
+    } catch (e) {
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      emit(AuthError(message: errorMessage));
+    }
+  }
+
+  Future<void> _onAuthEmailCodeSendRequested(
+    AuthEmailCodeSendRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    print('🏗️ AuthBloc: AuthEmailCodeSendRequested for ${event.email}');
+    emit(AuthLoading());
+    try {
+      await authRepository.sendEmailVerificationCode(event.email);
+      print('🏗️ AuthBloc: Code sent successfully');
+      emit(AuthEmailCodeSent());
+    } catch (e) {
+      print('🏗️ AuthBloc: Error sending code: $e');
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      emit(AuthError(message: errorMessage));
+    }
+  }
+
+  Future<void> _onAuthEmailLoginRequested(
+    AuthEmailLoginRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(AuthLoading());
+    try {
+      final user = await authRepository.loginWithEmailCode(
+        event.email,
         event.code,
       );
       emit(AuthAuthenticated(user: user));

@@ -459,8 +459,10 @@ export const sendTestEmail = async (req, res) => {
  */
 export const sendEmailCode = async (req, res) => {
   try {
+    console.log('📧 Received request to send email code:', req.body);
     const { email } = req.body;
     if (!email) {
+      console.log('❌ Email not provided in request');
       return res.status(400).json({ message: 'Email не указан' });
     }
 
@@ -481,6 +483,7 @@ export const sendEmailCode = async (req, res) => {
 
     // Генерируем код
     const code = EmailVerification.generateCode();
+    console.log('🔐 GENERATED EMAIL CODE:', code); // LOG THE CODE FOR DEBUGGING
 
     // Удаляем старые коды
     await EmailVerification.deleteMany({
@@ -501,12 +504,12 @@ export const sendEmailCode = async (req, res) => {
     const emailResult = await emailService.sendEmail(
       normalizedEmail,
       'Код подтверждения Kyte',
-      \Ваш код подтверждения: \\,
-      \<div style='font-family: sans-serif;'>
+      `Ваш код подтверждения: ${code}`,
+      `<div style="font-family: sans-serif;">
          <h2>Kyte Verification</h2>
-         <p>Ваш код подтверждения: <b style='font-size: 24px;'>\</b></p>
+         <p>Ваш код подтверждения: <b style="font-size: 24px;">${code}</b></p>
          <p>Код действителен 10 минут.</p>
-       </div>\
+       </div>`
     );
 
     if (!emailResult.success) {

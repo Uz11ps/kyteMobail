@@ -7,6 +7,11 @@
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Kyte Chat - Кроссплатформенное чат-приложение">
+  
+  <!-- Cache busting meta tags -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
 
   <!-- iOS meta tags & icons -->
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,14 +20,14 @@
   <meta name="apple-mobile-web-app-title" content="Kyte Chat">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <!-- <link rel="icon" type="image/png" href="favicon.png"/> -->
 
   <title>Kyte Chat</title>
   <link rel="manifest" href="manifest.json">
 
   <script>
     // The value below is injected by flutter build, do not touch.
-    var serviceWorkerVersion = "{{flutter_service_worker_version}}";
+    var serviceWorkerVersion = {{flutter_service_worker_version}};
   </script>
   <!-- This script adds the flutter initialization JS code -->
   <script src="flutter.js" defer></script>
@@ -30,17 +35,27 @@
 <body>
   <script>
     window.addEventListener('load', function(ev) {
-      // Download main.dart.js
-      _flutter.loader.loadEntrypoint({
-        serviceWorker: {
-          serviceWorkerVersion: serviceWorkerVersion,
-        },
+      // Config for flutter loader
+      var loaderConfig = {
         onEntrypointLoaded: function(engineInitializer) {
           engineInitializer.initializeEngine().then(function(appRunner) {
             appRunner.runApp();
           });
         }
-      });
+      };
+
+      // Service workers require a secure context (HTTPS)
+      // We disable it on HTTP to avoid "Service Worker API unavailable" errors
+      if (window.isSecureContext) {
+        loaderConfig.serviceWorker = {
+          serviceWorkerVersion: serviceWorkerVersion,
+        };
+      } else {
+        console.warn('⚠️ HTTP connection detected. Service Worker disabled to prevent errors.');
+      }
+
+      // Download main.dart.js
+      _flutter.loader.loadEntrypoint(loaderConfig);
     });
   </script>
 </body>

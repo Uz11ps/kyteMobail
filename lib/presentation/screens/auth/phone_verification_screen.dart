@@ -32,8 +32,29 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   @override
   void initState() {
     super.initState();
+    print('📱 PhoneVerificationScreen initState');
+    print('📱 PhoneNumber/Email: ${widget.phoneNumber}');
+    print('📱 IsEmail: ${widget.isEmail}');
+    
     _startResendTimer();
-    // In new design, keyboard is likely always shown or shown by default
+    
+    // Send code on initial load if email
+    if (widget.isEmail) {
+      print('📱 Dispatching AuthEmailCodeSendRequested');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        print('📱 Executing post-frame callback for email code');
+        context.read<AuthBloc>().add(
+          AuthEmailCodeSendRequested(email: widget.phoneNumber),
+        );
+      });
+    } else {
+      print('📱 Dispatching AuthPhoneCodeSendRequested');
+       WidgetsBinding.instance.addPostFrameCallback((_) {
+        context.read<AuthBloc>().add(
+          AuthPhoneCodeSendRequested(phone: widget.phoneNumber),
+        );
+      });
+    }
   }
 
   @override
@@ -61,7 +82,9 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   void _handleResendCode() {
     if (_resendSeconds == 0) {
       if (widget.isEmail) {
-        // Handle email resend logic
+        context.read<AuthBloc>().add(
+              AuthEmailCodeSendRequested(email: widget.phoneNumber),
+            );
       } else {
         context.read<AuthBloc>().add(
               AuthPhoneCodeSendRequested(phone: widget.phoneNumber),
@@ -83,9 +106,11 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         Navigator.of(context).pop(); // Back to Identifier screen
         Navigator.of(context).pop(); // Back to Profile
       } else if (widget.isEmail) {
-        // Existing email logic
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const ProfileSetupScreen()),
+        context.read<AuthBloc>().add(
+          AuthEmailLoginRequested(
+            email: widget.phoneNumber,
+            code: _codeController.text,
+          ),
         );
       } else {
         context.read<AuthBloc>().add(

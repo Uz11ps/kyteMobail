@@ -198,6 +198,87 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> sendEmailVerificationCode(String email) async {
+    print('💾 Repository: Sending email verification code to $email');
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.sendEmailCode,
+        data: {
+          'email': email,
+        },
+      );
+      print('💾 Repository: Response: ${response.data}');
+
+      if (response.data == null || !response.data['success']) {
+        throw Exception(response.data?['message'] ?? 'Ошибка отправки email');
+      }
+    } on DioException catch (e) {
+      print('💾 Repository: DioException: $e');
+      throw Exception(
+        _extractErrorMessage(e.response?.data, 'Ошибка отправки email кода'),
+      );
+    } catch (e) {
+      print('💾 Repository: Unknown error: $e');
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          errorMessage = e.toString();
+        }
+      } catch (_) {
+        errorMessage = 'Ошибка отправки email кода';
+      }
+      throw Exception('Ошибка отправки email кода: $errorMessage');
+    }
+  }
+
+  @override
+  Future<UserModel> loginWithEmailCode(String email, String code, {String? name}) async {
+    try {
+      final response = await _dio.post(
+        ApiEndpoints.verifyEmailCode,
+        data: {
+          'email': email,
+          'code': code,
+          if (name != null) 'name': name,
+        },
+      );
+
+      if (response.data == null || response.data['user'] == null) {
+        throw Exception('Неполные данные ответа сервера');
+      }
+
+      final userData = response.data['user'];
+      final newAccessToken = response.data['accessToken'];
+      final newRefreshToken = response.data['refreshToken'];
+
+      final user = UserModel.fromJson(userData);
+
+      await _storage.write(StorageKeys.accessToken, newAccessToken.toString());
+      await _storage.write(StorageKeys.refreshToken, newRefreshToken.toString());
+      await _storage.write(StorageKeys.userId, user.id);
+      if (user.email != null) {
+        await _storage.write(StorageKeys.userEmail, user.email!);
+      }
+
+      return user;
+    } on DioException catch (e) {
+      throw Exception(
+        _extractErrorMessage(e.response?.data, 'Ошибка входа по email'),
+      );
+    } catch (e) {
+      String errorMessage = 'Неизвестная ошибка';
+      try {
+        if (e != null) {
+          errorMessage = e.toString();
+        }
+      } catch (_) {
+        errorMessage = 'Ошибка входа по email';
+      }
+      throw Exception('Ошибка входа по email: $errorMessage');
+    }
+  }
+
+  @override
   Future<UserModel> registerWithPhone(String phone, String code, {String? name}) async {
     try {
       final response = await _dio.post(

@@ -5,6 +5,8 @@ class ApiEndpoints {
   static const String refreshToken = '/auth/refresh';
   static const String sendPhoneCode = '/auth/phone/send-code';
   static const String verifyPhoneCode = '/auth/phone/verify-code';
+  static const String sendEmailCode = '/auth/email/send-code';
+  static const String verifyEmailCode = '/auth/email/verify-code';
   static const String guestLogin = '/auth/guest';
   
   // Chats

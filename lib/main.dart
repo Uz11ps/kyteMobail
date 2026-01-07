@@ -34,6 +34,7 @@ void main() async {
   }
   
   debugPrint('🚀 Запуск приложения...');
+  debugPrint('🚀 APP VERSION: 1.0.1 (DEBUG UPDATE)');
   debugPrint('📱 API URL: ${AppConfig.apiBaseUrl}');
   debugPrint('🔌 WebSocket URL: ${AppConfig.wsBaseUrl}');
   

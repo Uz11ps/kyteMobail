@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'dart:async';
 import '../config/app_config.dart';
 import '../constants/api_endpoints.dart';
 import '../utils/storage_keys.dart';
@@ -8,6 +9,10 @@ class ApiClient {
   late final Dio _dio;
   final StorageService _storage = StorageService.instance;
   Future<bool>? _refreshInFlight;
+  
+  // Поток для уведомления об истечении сессии
+  static final StreamController<void> _authExpiredController = StreamController<void>.broadcast();
+  static Stream<void> get authExpired => _authExpiredController.stream;
 
   ApiClient() {
     _dio = Dio(
@@ -24,7 +29,9 @@ class ApiClient {
           // Не добавляем токен для login, register и guest запросов
           final isAuthRequest = options.path.contains('/auth/login') || 
                                 options.path.contains('/auth/register') ||
-                                options.path.contains('/auth/guest');
+                                options.path.contains('/auth/guest') ||
+                                options.path.contains('/auth/phone') ||
+                                options.path.contains('/auth/email');
           
           if (!isAuthRequest) {
             final token = await _storage.read(StorageKeys.accessToken);
@@ -77,6 +84,10 @@ class ApiClient {
             } catch (e) {
               print('❌ Error refreshing token: $e');
             }
+            
+            // Если обновление не удалось или токен все еще невалиден,
+            // уведомляем о необходимости выхода
+            _authExpiredController.add(null);
           }
           return handler.next(error);
         },
