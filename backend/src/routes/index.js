@@ -6,6 +6,7 @@ import aiRoutes from './ai.routes.js';
 import googleRoutes from './google.routes.js';
 import userRoutes from './user.routes.js';
 import adminRoutes from './admin.routes.js';
+import serviceRoutes from './service.routes.js';
 import fileRoutes from './file.routes.js';
 import messageRoutes from './message.routes.js';
 
@@ -18,6 +19,7 @@ router.use('/ai', aiRoutes);
 router.use('/google', googleRoutes);
 router.use('/user', userRoutes);
 router.use('/admin', adminRoutes);
+router.use('/service', serviceRoutes);
 router.use('/', fileRoutes);
 router.use('/', messageRoutes);
 
