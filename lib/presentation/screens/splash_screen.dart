@@ -13,8 +13,8 @@ class SplashScreen extends StatelessWidget {
         if (state is AuthAuthenticated) {
           Navigator.of(context).pushReplacementNamed(AppRouter.chats);
         } else if (state is AuthUnauthenticated || state is AuthError) {
-          // При ошибке или отсутствии авторизации переходим на экран логина
-          Navigator.of(context).pushReplacementNamed(AppRouter.phoneLogin);
+          // При ошибке или отсутствии авторизации переходим на экран приветствия
+          Navigator.of(context).pushReplacementNamed(AppRouter.welcome);
         }
       },
       child: Scaffold(

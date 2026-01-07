@@ -5,6 +5,7 @@ import '../../data/models/user_model.dart';
 import '../../core/di/service_locator.dart';
 import '../../core/config/app_config.dart';
 import '../bloc/auth/auth_bloc.dart';
+import '../screens/auth/auth_identifier_screen.dart';
 
 class ProfileBottomSheet extends StatefulWidget {
   final UserModel user;
@@ -122,9 +123,36 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet> {
           const SizedBox(height: 24),
           const Divider(color: Colors.white10),
           const SizedBox(height: 16),
-          _buildInfoField('Phone number', widget.user.phone ?? 'Not provided', isVerified: true),
+          _buildInfoField(
+            'Phone number',
+            widget.user.phone ?? 'Add your phone number',
+            isVerified: widget.user.phone != null,
+            isLink: widget.user.phone == null,
+            onTap: widget.user.phone == null
+                ? () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AuthIdentifierScreen(mode: AuthIdentifierMode.addPhone),
+                      ),
+                    );
+                  }
+                : null,
+          ),
           const SizedBox(height: 24),
-          _buildInfoField('Email', widget.user.email ?? 'Add your email address', isLink: widget.user.email == null),
+          _buildInfoField(
+            'Email',
+            widget.user.email ?? 'Add your email address',
+            isLink: widget.user.email == null,
+            onTap: widget.user.email == null
+                ? () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AuthIdentifierScreen(mode: AuthIdentifierMode.addEmail),
+                      ),
+                    );
+                  }
+                : null,
+          ),
         ],
       ),
     );
@@ -168,28 +196,32 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet> {
     );
   }
 
-  Widget _buildInfoField(String label, String value, {bool isVerified = false, bool isLink = false}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Text(
-                value,
-                style: TextStyle(
-                  color: isLink ? Colors.blue.shade300 : Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+  Widget _buildInfoField(String label, String value, {bool isVerified = false, bool isLink = false, VoidCallback? onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  value,
+                  style: TextStyle(
+                    color: isLink ? Colors.blue.shade300 : Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            if (isVerified) const Icon(Icons.check_circle, color: Colors.green, size: 20),
-          ],
-        ),
-      ],
+              if (isVerified) const Icon(Icons.check_circle, color: Colors.green, size: 20),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -212,4 +244,9 @@ class _ProfileBottomSheetState extends State<ProfileBottomSheet> {
     );
   }
 }
+
+
+
+
+
 

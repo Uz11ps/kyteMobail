@@ -5,6 +5,8 @@ import 'package:intl/intl.dart';
 import '../widgets/ai_chat_popup.dart';
 import '../../core/di/service_locator.dart';
 import '../../data/models/meeting_model.dart';
+import '../../data/models/user_model.dart';
+import '../screens/groups/event_create_edit_screen.dart';
 
 class CalendarBottomSheet extends StatefulWidget {
   final String chatId;
@@ -80,22 +82,50 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
   }
 
   Future<void> _createMeeting() async {
-    try {
-      final meetUrl = await ServiceLocator().meetingRepository.createMeeting(
-        chatId: widget.chatId,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Встреча создана: $meetUrl')),
-        );
-        _loadMeetings(); // Refresh list
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Ошибка создания встречи'), backgroundColor: Colors.red),
-        );
-      }
+    // В реальном приложении получаем список участников группы через репозиторий
+    // Для демо используем текущих из selected meeting или заглушку
+    final groupMembers = [
+      UserModel(id: 'u1', name: 'you', email: 'you@kyte.me'),
+      UserModel(id: 'u2', name: 'Dmitry Bilyk', email: 'dmitry@kyte.me'),
+      UserModel(id: 'u3', name: 'Jason Statham', email: 'jason@kyte.me'),
+      UserModel(id: 'u4', name: 'Mick Jagger', email: 'mick@kyte.me'),
+    ];
+
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EventCreateEditScreen(
+          chatId: widget.chatId,
+          groupMembers: groupMembers,
+        ),
+      ),
+    );
+
+    if (result == true) {
+      _loadMeetings();
+    }
+  }
+
+  Future<void> _editMeeting(MeetingModel meeting) async {
+    final groupMembers = [
+      UserModel(id: 'u1', name: 'you', email: 'you@kyte.me'),
+      UserModel(id: 'u2', name: 'Dmitry Bilyk', email: 'dmitry@kyte.me'),
+      UserModel(id: 'u3', name: 'Jason Statham', email: 'jason@kyte.me'),
+      UserModel(id: 'u4', name: 'Mick Jagger', email: 'mick@kyte.me'),
+    ];
+
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EventCreateEditScreen(
+          chatId: widget.chatId,
+          meeting: meeting,
+          groupMembers: groupMembers,
+        ),
+      ),
+    );
+
+    if (result == true) {
+      setState(() => _selectedMeeting = null);
+      _loadMeetings();
     }
   }
 
@@ -122,6 +152,7 @@ class _CalendarBottomSheetState extends State<CalendarBottomSheet> {
             _EventDetailView(
               meeting: _selectedMeeting!,
               onBack: () => setState(() => _selectedMeeting = null),
+              onEdit: () => _editMeeting(_selectedMeeting!),
             )
           else if (_showEventsList)
             _EventsListView(
@@ -630,8 +661,9 @@ class _EventCard extends StatelessWidget {
 class _EventDetailView extends StatelessWidget {
   final MeetingModel meeting;
   final VoidCallback onBack;
+  final VoidCallback onEdit;
 
-  const _EventDetailView({required this.meeting, required this.onBack});
+  const _EventDetailView({required this.meeting, required this.onBack, required this.onEdit});
 
   @override
   Widget build(BuildContext context) {
@@ -651,6 +683,7 @@ class _EventDetailView extends StatelessWidget {
           ),
           title: Text(meeting.summary, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 16)),
           actions: [
+            IconButton(icon: const Icon(Icons.edit_outlined, color: Colors.white), onPressed: onEdit),
             IconButton(icon: const Icon(Icons.ios_share, color: Colors.white), onPressed: () {}),
           ],
         ),

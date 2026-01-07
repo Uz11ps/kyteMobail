@@ -98,6 +98,39 @@ export const getUserById = async (req, res) => {
   }
 };
 
+// Поиск пользователя по Email или телефону
+export const findUser = async (req, res) => {
+  try {
+    const { identifier } = req.query;
+    if (!identifier) {
+      return res.status(400).json({ message: 'Идентификатор не указан' });
+    }
+
+    const user = await User.findOne({
+      $or: [
+        { email: identifier.toLowerCase() },
+        { phone: identifier },
+      ],
+    }).lean();
+
+    if (!user) {
+      return res.status(404).json({ message: 'Пользователь не найден' });
+    }
+
+    const userResponse = {
+      ...user,
+      id: user._id.toString(),
+    };
+    delete userResponse._id;
+    delete userResponse.password;
+    
+    res.json({ user: userResponse });
+  } catch (error) {
+    console.error('Ошибка поиска пользователя:', error);
+    res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
 // Загрузка аватара пользователя
 export const uploadAvatar = async (req, res) => {
   try {

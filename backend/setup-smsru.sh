@@ -56,3 +56,8 @@ echo "curl -X POST http://94.131.88.135/api/auth/phone/send-code \\"
 echo "  -H 'Content-Type: application/json' \\"
 echo "  -d '{\"phone\": \"+79686288842\"}'"
 
+
+
+
+
+

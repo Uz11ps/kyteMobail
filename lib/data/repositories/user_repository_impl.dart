@@ -68,6 +68,22 @@ class UserRepositoryImpl implements UserRepository {
   }
 
   @override
+  Future<UserModel?> findUserByIdentifier(String identifier) async {
+    try {
+      final response = await _dio.get('/user/find', queryParameters: {'identifier': identifier});
+      if (response.data == null || response.data['user'] == null) {
+        return null;
+      }
+      return UserModel.fromJson(response.data['user']);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 404) {
+        return null;
+      }
+      throw Exception(e.response?.data['message'] ?? 'Ошибка поиска пользователя');
+    }
+  }
+
+  @override
   Future<String> uploadAvatar(String filePath) async {
     try {
       final file = File(filePath);

@@ -12,6 +12,7 @@ abstract class UserRepository {
   });
   Future<String> uploadAvatar(String filePath);
   Future<UserModel> getUserById(String id);
+  Future<UserModel?> findUserByIdentifier(String identifier);
 }
 
 

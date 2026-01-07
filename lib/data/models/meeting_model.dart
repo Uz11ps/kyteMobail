@@ -50,3 +50,8 @@ class AttendeeModel {
   Map<String, dynamic> toJson() => _$AttendeeModelToJson(this);
 }
 
+
+
+
+
+

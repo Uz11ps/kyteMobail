@@ -3,6 +3,7 @@ import { PhoneVerification } from '../models/PhoneVerification.js';
 import { generateTokens, verifyToken } from '../utils/jwt.js';
 import { encrypt } from '../utils/encryption.js';
 import { smsService } from '../services/sms.service.js';
+import { emailService } from '../services/email.service.js';
 
 export const login = async (req, res) => {
   try {
@@ -411,6 +412,35 @@ export const guestLogin = async (req, res) => {
   } catch (error) {
     console.error('Ошибка гостевого входа:', error);
     res.status(500).json({ message: 'Ошибка сервера' });
+  }
+};
+
+/**
+ * Отправка тестового email
+ * POST /api/auth/email/test
+ */
+export const sendTestEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Email не указан' });
+    }
+
+    const result = await emailService.sendEmail(
+      email,
+      'Тестовое письмо от Kyte',
+      'Это тестовое письмо для проверки SMTP настроек.',
+      '<h1>Kyte Email Test</h1><p>Это тестовое письмо для проверки <b>SMTP настроек</b>.</p>'
+    );
+
+    if (result.success) {
+      res.json({ message: 'Email отправлен успешно', messageId: result.messageId });
+    } else {
+      res.status(500).json({ message: 'Ошибка отправки email', error: result.error });
+    }
+  } catch (error) {
+    console.error('Ошибка в sendTestEmail:', error);
+    res.status(500).json({ message: 'Внутренняя ошибка сервера' });
   }
 };
 
