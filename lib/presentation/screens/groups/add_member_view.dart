@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:ui';
 import '../../../core/di/service_locator.dart';
-import '../../../domain/repositories/user_repository.dart';
 import '../../../data/models/user_model.dart';
 import '../../../core/config/app_config.dart';
 
@@ -38,7 +36,7 @@ class _AddMemberViewState extends State<AddMemberView> {
     });
 
     try {
-      final userRepository = getIt<UserRepository>();
+      final userRepository = ServiceLocator().userRepository;
       final user = await userRepository.findUserByIdentifier(val);
       
       setState(() {
@@ -260,4 +258,3 @@ class _AddMemberViewState extends State<AddMemberView> {
     );
   }
 }
-

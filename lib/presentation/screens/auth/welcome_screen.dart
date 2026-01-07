@@ -62,18 +62,18 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                       children: [
                         const TextSpan(text: 'By continue using the service you are agreeing\nwith '),
-                        TextSpan(
+                        const TextSpan(
                           text: 'the Terms Of Use',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                             decoration: TextDecoration.underline,
                           ),
                         ),
                         const TextSpan(text: ' and '),
-                        TextSpan(
+                        const TextSpan(
                           text: 'the Privacy Policy',
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
                             decoration: TextDecoration.underline,
@@ -94,4 +94,48 @@ class WelcomeScreen extends StatelessWidget {
 }
 
 class _AuthButton extends StatelessWidget {
+  final String text;
+  final IconData icon;
+  final VoidCallback onPressed;
 
+  const _AuthButton({
+    required this.text,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white.withOpacity(0.08),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.white.withOpacity(0.1)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: Colors.white),
+            const SizedBox(width: 16),
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
