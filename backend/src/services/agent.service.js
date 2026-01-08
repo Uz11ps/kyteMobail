@@ -49,7 +49,7 @@ class AgentService {
       axios.post(this.webhookUrl, payload, {
         headers: {
           'Content-Type': 'application/json',
-          'X-Service-API-Key': process.env.SERVICE_API_KEY || 'kyte_service_secret_2024',
+          'X-Service-API-Key': process.env.SERVICE_API_KEY || 'kyte2026AgentKeyX777',
         },
         timeout: 5000, // Таймаут 5 секунд
       }).catch(err => {
