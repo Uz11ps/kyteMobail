@@ -1,39 +1,62 @@
 import express from 'express';
 import { User } from '../models/User.js';
+import { Chat } from '../models/Chat.js';
+import { Message } from '../models/Message.js';
 import { serviceAuth } from '../middleware/serviceAuth.js';
 
 const router = express.Router();
 
 /**
- * Поиск пользователя по имени или никнейму для нужд ИИ агента
- * GET /api/service/users/lookup?name=Иван
+ * Отправка сообщения от имени ИИ агента
+ * POST /api/service/messages/send
  */
-router.get('/users/lookup', serviceAuth, async (req, res) => {
+router.post('/messages/send', serviceAuth, async (req, res) => {
   try {
-    const { name } = req.query;
+    const { chatId, content, metadata } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ error: 'Name parameter is required' });
+    if (!chatId || !content) {
+      return res.status(400).json({ error: 'chatId and content are required' });
     }
 
-    // Ищем пользователя по частичному совпадению имени или никнейма
-    const users = await User.find({
-      $or: [
-        { name: { $regex: name, $options: 'i' } },
-        { nickname: { $regex: name, $options: 'i' } },
-        { email: { $regex: name, $options: 'i' } }
-      ]
-    })
-    .select('name nickname email phone avatarUrl')
-    .limit(5)
-    .lean();
+    // Находим или создаем системного пользователя "Kyte AI"
+    let aiUser = await User.findOne({ email: 'ai-agent@kyte.me' });
+    if (!aiUser) {
+      aiUser = new User({
+        email: 'ai-agent@kyte.me',
+        name: 'Kyte AI Assistant',
+        nickname: 'kyte_ai',
+        isAI: true // Добавим флаг если нужно
+      });
+      await aiUser.save();
+    }
 
-    res.json({ users });
+    // Создаем сообщение
+    const message = new Message({
+      chatId,
+      userId: aiUser._id,
+      content,
+      type: 'ai',
+      metadata: metadata || {}
+    });
+
+    await message.save();
+
+    // Обновляем последнее сообщение в чате
+    await Chat.findByIdAndUpdate(chatId, {
+      lastMessage: message._id,
+      lastMessageAt: message.createdAt
+    });
+
+    res.json({ success: true, messageId: message._id });
   } catch (error) {
-    console.error('Service API Error (User Lookup):', error);
+    console.error('Service API Error (Send Message):', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
+
+/**
+ * Поиск пользователя по имени или никнейму для нужд ИИ агента
+... (остальной код) ...
 
 /**
  * Получение информации о чате для анализа контекста

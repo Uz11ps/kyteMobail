@@ -1,7 +1,7 @@
-import { askAI as askAIService, getAISuggestions as getAISuggestionsService } from '../services/openai.service.js';
 import { Chat } from '../models/Chat.js';
 import { Message } from '../models/Message.js';
 import { io } from '../server.js';
+import { agentService } from '../services/agent.service.js';
 
 // Получение или создание приватного AI чата для пользователя
 const getOrCreateAIChat = async (userId) => {
@@ -14,7 +14,7 @@ const getOrCreateAIChat = async (userId) => {
   if (!aiChat) {
     // Создаем новый AI чат
     aiChat = new Chat({
-      name: 'Kyte',
+      name: 'Kyte Assistant',
       type: 'ai',
       participants: [userId],
       createdBy: userId,
@@ -54,39 +54,33 @@ export const aiChat = async (req, res) => {
       updatedAt: Date.now(),
     });
 
-    // Получаем ответ от AI
-    const result = await askAIService(
-      aiChat._id.toString(),
-      question.trim(),
-      userId
-    );
+    const formattedUserMessage = {
+      id: userMessage._id.toString(),
+      chatId: aiChat._id.toString(),
+      userId: userId.toString(),
+      userName: req.user.name || req.user.email,
+      content: userMessage.content,
+      type: 'text',
+      createdAt: userMessage.createdAt,
+    };
 
-    // Отправка через WebSocket
-    io.to(`chat:${aiChat._id}`).emit('message', {
-      ...result.message,
-      userName: 'User',
-    });
-    io.to(`chat:${aiChat._id}`).emit('message', {
-      ...result.message,
-      userName: 'Kyte',
-    });
+    // Отправка через WebSocket вопроса пользователя
+    io.to(`chat:${aiChat._id}`).emit('message', formattedUserMessage);
+
+    // Уведомляем n8n агента
+    // Загружаем чат с участниками для контекста
+    const chatData = await Chat.findById(aiChat._id).populate('participants').lean();
+    agentService.notifyAgent(formattedUserMessage, chatData);
 
     res.json({
+      success: true,
+      message: 'Запрос отправлен агенту',
       chatId: aiChat._id.toString(),
-      userMessage: {
-        id: userMessage._id.toString(),
-        chatId: aiChat._id.toString(),
-        userId: userId.toString(),
-        userName: req.user.name || req.user.email,
-        content: userMessage.content,
-        type: 'text',
-        createdAt: userMessage.createdAt,
-      },
-      aiMessage: result.message,
+      userMessage: formattedUserMessage
     });
   } catch (error) {
     console.error('Ошибка AI чата:', error);
-    res.status(500).json({ message: error.message || 'Ошибка сервера' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 };
 
@@ -104,16 +98,26 @@ export const getAIChatHistory = async (req, res) => {
       .sort({ createdAt: 1 })
       .lean();
 
-    const formattedMessages = messages.map(msg => ({
-      id: msg._id.toString(),
-      chatId: msg.chatId.toString(),
-      userId: msg.userId._id.toString(),
-      userName: msg.type === 'ai' ? 'Kyte' : (msg.userId.name || msg.userId.email),
-      content: msg.content,
-      type: msg.type,
-      createdAt: msg.createdAt,
-      metadata: msg.metadata ? Object.fromEntries(msg.metadata) : null,
-    }));
+    const formattedMessages = messages.map(msg => {
+      let userIdStr = '';
+      let userNameStr = 'Kyte';
+
+      if (msg.userId) {
+        userIdStr = msg.userId._id ? msg.userId._id.toString() : msg.userId.toString();
+        userNameStr = msg.type === 'ai' ? 'Kyte' : (msg.userId.name || msg.userId.email || 'User');
+      }
+
+      return {
+        id: msg._id.toString(),
+        chatId: msg.chatId.toString(),
+        userId: userIdStr,
+        userName: userNameStr,
+        content: msg.content,
+        type: msg.type,
+        createdAt: msg.createdAt,
+        metadata: msg.metadata ? (msg.metadata instanceof Map ? Object.fromEntries(msg.metadata) : msg.metadata) : null,
+      };
+    });
 
     res.json({
       chatId: aiChat._id.toString(),
@@ -134,33 +138,42 @@ export const askAI = async (req, res) => {
       return res.status(400).json({ message: 'chatId и question обязательны' });
     }
 
-    const result = await askAIService(chatId, question, userId, req.user.name || req.user.email);
+    // Сохраняем вопрос пользователя
+    const userMessage = new Message({
+      chatId,
+      userId,
+      content: question.trim(),
+      type: 'text',
+    });
+    await userMessage.save();
+
+    const formattedUserMessage = {
+      id: userMessage._id.toString(),
+      chatId: chatId.toString(),
+      userId: userId.toString(),
+      userName: req.user.name || req.user.email,
+      content: userMessage.content,
+      type: 'text',
+      createdAt: userMessage.createdAt,
+    };
 
     // Отправка через WebSocket
-    io.to(`chat:${chatId}`).emit('message', result.message);
+    io.to(`chat:${chatId}`).emit('message', formattedUserMessage);
 
-    res.json(result);
+    // Уведомляем n8n агента
+    const chatData = await Chat.findById(chatId).populate('participants').lean();
+    agentService.notifyAgent(formattedUserMessage, chatData);
+
+    res.json({ success: true, message: 'Запрос отправлен агенту' });
   } catch (error) {
     console.error('Ошибка запроса к AI:', error);
-    res.status(500).json({ message: error.message || 'Ошибка сервера' });
+    res.status(500).json({ message: 'Ошибка сервера' });
   }
 };
 
 export const getAISuggestions = async (req, res) => {
-  try {
-    const { chatId } = req.query;
-    const userId = req.user._id;
-
-    if (!chatId) {
-      return res.status(400).json({ message: 'chatId обязателен' });
-    }
-
-    const suggestions = await getAISuggestionsService(chatId);
-
-    res.json({ suggestions });
-  } catch (error) {
-    console.error('Ошибка получения предложений AI:', error);
-    res.status(500).json({ message: 'Ошибка сервера' });
-  }
+  // В режиме n8n предложения можно реализовать через отдельный механизм или оставить пустым
+  res.json({ suggestions: [] });
 };
+
 

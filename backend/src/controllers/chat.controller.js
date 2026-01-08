@@ -3,6 +3,7 @@ import { Message } from '../models/Message.js';
 import { User } from '../models/User.js';
 import { io } from '../server.js';
 import { sendPushToChatParticipants } from '../services/push.service.js';
+import { agentService } from '../services/agent.service.js';
 
 export const getChats = async (req, res) => {
   try {
@@ -234,6 +235,12 @@ export const sendMessage = async (req, res) => {
       formattedMessage.content,
       userId.toString()
     );
+
+    // Уведомляем ИИ агента (асинхронно), если сообщение не от самого агента
+    const sender = await User.findById(userId).lean();
+    if (!sender?.isAI) {
+      agentService.notifyAgent(formattedMessage, chat);
+    }
 
     res.status(201).json({ message: formattedMessage });
   } catch (error) {

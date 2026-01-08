@@ -51,6 +51,10 @@ const userSchema = new mongoose.Schema({
   fcmToken: {
     type: String,
   },
+  isAI: {
+    type: Boolean,
+    default: false,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
