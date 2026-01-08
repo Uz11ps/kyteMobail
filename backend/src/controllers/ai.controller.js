@@ -7,15 +7,15 @@ import { agentService } from '../services/agent.service.js';
 const getOrCreateAIChat = async (userId) => {
   // Ищем существующий AI чат для пользователя
   let aiChat = await Chat.findOne({
-    type: 'ai',
     participants: userId,
+    $or: [{ type: 'ai' }, { name: 'Kyte Assistant' }]
   });
 
   if (!aiChat) {
     // Создаем новый AI чат
     aiChat = new Chat({
       name: 'Kyte Assistant',
-      type: 'ai',
+      type: 'direct', // Маскируем под direct для фронтенда
       participants: [userId],
       createdBy: userId,
     });

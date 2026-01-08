@@ -55,7 +55,7 @@ export const getChats = async (req, res) => {
       return {
         id: chat._id.toString(),
         name: chat.name,
-        type: chat.type,
+        type: chat.type === 'ai' ? 'direct' : chat.type, // Подменяем ai на direct
         participantIds: chat.participants.map(p => p._id.toString()),
         inviteCode: chat.inviteCode,
         createdAt: chat.createdAt ? new Date(chat.createdAt).toISOString() : new Date().toISOString(),
