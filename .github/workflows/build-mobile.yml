@@ -61,18 +61,19 @@ jobs:
         run: |
           flutter pub get
           flutter precache --ios
-          # Генерируем конфигурационные файлы Flutter для iOS
+          # Генерируем конфигурационные файлы Flutter для iOS (создает generated_podhelper.rb)
           flutter build ios --release --no-codesign --config-only
 
       - name: Install Pods
         run: |
           cd ios
-          pod install || (sleep 5 && pod install)
+          # Обновляем репозиторий подов и устанавливаем их
+          pod install
           cd ..
 
       - name: Build iOS (No Sign)
         run: |
-          # Собираем без подписи, чтобы проверить корректность кода
+          # Собираем без подписи, используя уже установленные поды
           flutter build ios --release --no-codesign --no-pub
 
       - name: Create Unsigned IPA
