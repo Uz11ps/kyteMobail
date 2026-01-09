@@ -60,13 +60,14 @@ jobs:
       - name: Install dependencies
         run: |
           flutter pub get
+          flutter precache --ios
           # Генерируем конфигурационные файлы Flutter для iOS
           flutter build ios --release --no-codesign --config-only
 
       - name: Install Pods
         run: |
           cd ios
-          pod install
+          pod install || (sleep 5 && pod install)
           cd ..
 
       - name: Build iOS (No Sign)
