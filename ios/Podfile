@@ -19,7 +19,7 @@ post_install do |installer|
     flutter_additional_ios_build_settings(target)
     
     target.build_configurations.each do |config|
-      # Fix the "IPHONEOS_DEPLOYMENT_TARGET is set to 9.0" warnings
+      # Force deployment target to 13.0 for ALL pod targets and configurations
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       # Fix Bitcode issues
       config.build_settings['ENABLE_BITCODE'] = 'NO'
