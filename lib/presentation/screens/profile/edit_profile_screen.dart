@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'dart:ui';
-import 'dart:html' as html;
+import 'package:universal_html/html.dart' as html;
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import '../../../data/models/user_model.dart';

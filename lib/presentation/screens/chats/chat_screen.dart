@@ -6,7 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
 import 'dart:ui';
 import 'dart:io';
-import 'dart:html' as html;
+import 'package:universal_html/html.dart' as html;
 import 'dart:typed_data';
 import '../../bloc/chat/chat_bloc.dart';
 import '../../bloc/ai/ai_bloc.dart';
