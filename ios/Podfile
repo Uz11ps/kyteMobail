@@ -1,5 +1,5 @@
 # The next line is used by Flutter to locate generated config file.
-import File.expand_path(File.join('..', 'Flutter', 'generated_podhelper.rb'), __FILE__)
+load File.expand_path(File.join('..', 'Flutter', 'generated_podhelper.rb'), __FILE__)
 
 platform :ios, '13.0'
 
