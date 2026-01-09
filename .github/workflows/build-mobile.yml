@@ -58,13 +58,21 @@ jobs:
           channel: 'stable'
 
       - name: Install dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get
+          # Генерируем конфигурационные файлы Flutter для iOS
+          flutter build ios --release --no-codesign --config-only
+
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install
+          cd ..
 
       - name: Build iOS (No Sign)
         run: |
           # Собираем без подписи, чтобы проверить корректность кода
-          flutter build ios --release --no-codesign --config-only
-          flutter build ios --release --no-codesign
+          flutter build ios --release --no-codesign --no-pub
 
       - name: Create Unsigned IPA
         run: |
