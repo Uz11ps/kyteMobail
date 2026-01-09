@@ -59,15 +59,16 @@ jobs:
 
       - name: Install dependencies
         run: |
+          # Принудительно восстанавливаем структуру iOS проекта с правильным именем
+          flutter create --project-name kyte_mobile . --platforms ios
           flutter pub get
           flutter precache --ios
-          # Генерируем конфигурационные файлы Flutter для iOS (создает generated_podhelper.rb)
+          # Генерируем конфигурационные файлы Flutter для iOS
           flutter build ios --release --no-codesign --config-only
 
       - name: Install Pods
         run: |
           cd ios
-          # Обновляем репозиторий подов и устанавливаем их
           pod install
           cd ..
 
