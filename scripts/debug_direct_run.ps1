@@ -16,3 +16,4 @@ ssh -i $KeyPath "$Username@$ServerIP" "cd /var/www/kyte-backend/backend && node 
 
 Write-Host "🏁 Тест завершен"
 
+

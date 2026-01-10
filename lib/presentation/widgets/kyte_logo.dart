@@ -133,3 +133,4 @@ class KyteLogoPainter extends CustomPainter {
   bool shouldRepaint(covariant KyteLogoPainter oldDelegate) => oldDelegate.color != color;
 }
 
+

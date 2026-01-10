@@ -61,7 +61,7 @@ class _GroupCreateScreenState extends State<GroupCreateScreen> {
           GroupCreateRequested(
             name: _nameController.text,
             participantIds: participantIds,
-            // description: _descriptionController.text, // Need to update event/bloc
+            description: _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
           ),
         );
   }
@@ -162,16 +162,23 @@ class _GroupCreateScreenState extends State<GroupCreateScreen> {
                         // Add Member Button
                         InkWell(
                           onTap: _addMember,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                          borderRadius: const BorderRadius.all(Radius.circular(24)),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
                             child: Row(
                               children: [
-                                Icon(Icons.add, color: Colors.white.withOpacity(0.7), size: 20),
+                                Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(Icons.add, color: Colors.white, size: 20),
+                                ),
                                 const SizedBox(width: 12),
                                 const Text(
                                   'Add member',
-                                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                                  style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),

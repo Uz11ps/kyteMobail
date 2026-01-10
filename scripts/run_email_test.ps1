@@ -13,3 +13,4 @@ Write-Host ""
 Write-Host "📋 Checking logs for the generated code..." -ForegroundColor Yellow
 ssh -i $Key -o StrictHostKeyChecking=no "$User@$ServerIP" "grep -r 'GENERATED EMAIL CODE' /home/$User/.pm2/logs/kyte-backend-out.log | tail -n 5"
 
+

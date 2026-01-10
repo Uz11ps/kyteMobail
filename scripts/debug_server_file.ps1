@@ -22,3 +22,4 @@ scp -i $KeyPath "backend/src/server.js" "${Username}@${ServerIP}:/var/www/kyte-b
 # Перезапускаем
 ssh -i $KeyPath "$Username@$ServerIP" "sudo pm2 restart kyte-backend && sudo pm2 logs kyte-backend --lines 20 --nostream"
 
+

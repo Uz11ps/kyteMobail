@@ -17,3 +17,4 @@ ssh -i $KeyPath "$Username@$ServerIP" "sudo pm2 restart kyte-backend && sleep 2 
 
 Write-Host "✅ Исправление применено" -ForegroundColor Green
 
+

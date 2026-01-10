@@ -29,3 +29,4 @@ ssh -i $KeyPath -t "$Username@$ServerIP" $remoteCmd
 
 Write-Host "✅ Готово" -ForegroundColor Green
 
+

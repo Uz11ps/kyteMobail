@@ -26,3 +26,4 @@ sudo pm2 logs kyte-backend --lines 20 --nostream
 ssh -i $KeyPath "$Username@$ServerIP" $cmd
 Write-Host "✅ Готово"
 
+

@@ -148,8 +148,16 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
                   height: 64,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Logic for Telegram linking
-                      // For now, let's show the input field version too or just navigate to verification
+                      // Simulating Telegram login by using a mock phone number or just navigating
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PhoneVerificationScreen(
+                            phoneNumber: '+79990000000', // Mock for Telegram
+                            isEmail: false,
+                            isLinking: true,
+                          ),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,

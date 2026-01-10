@@ -189,6 +189,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final group = await chatRepository.createGroup(
         event.name,
         event.participantIds,
+        description: event.description,
       );
       emit(GroupCreated(group: group));
     } catch (e) {

@@ -21,3 +21,4 @@ ssh -i $KeyPath "$Username@$ServerIP" $cleanScript
 Write-Host "⏳ Проверка логов..."
 ssh -i $KeyPath "$Username@$ServerIP" "sudo pm2 logs kyte-backend --lines 10 --nostream"
 
+

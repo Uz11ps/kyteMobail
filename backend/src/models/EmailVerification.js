@@ -65,3 +65,4 @@ emailVerificationSchema.statics.generateCode = function() {
 
 export const EmailVerification = mongoose.model('EmailVerification', emailVerificationSchema);
 
+

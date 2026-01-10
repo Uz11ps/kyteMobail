@@ -16,3 +16,4 @@ Write-Host "⏳ Проверка логов..."
 Start-Sleep -Seconds 3
 ssh -i $KeyPath "$Username@$ServerIP" "sudo pm2 logs kyte-backend --lines 10 --nostream"
 
+

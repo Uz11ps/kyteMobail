@@ -196,13 +196,14 @@ class ChatRepositoryImpl implements ChatRepository {
   }
 
   @override
-  Future<ChatModel> createGroup(String name, List<String> participantIds) async {
+  Future<ChatModel> createGroup(String name, List<String> participantIds, {String? description}) async {
     try {
       final response = await _dio.post(
         ApiEndpoints.createGroup,
         data: {
           'name': name,
           'participantIds': participantIds,
+          if (description != null) 'description': description,
         },
       );
       if (response.data == null || response.data['group'] == null) {

@@ -12,7 +12,7 @@ abstract class ChatRepository {
     int? fileSize,
     MessageType type = MessageType.text,
   });
-  Future<ChatModel> createGroup(String name, List<String> participantIds);
+  Future<ChatModel> createGroup(String name, List<String> participantIds, {String? description});
   Future<ChatModel> joinGroup(String inviteCode);
 }
 

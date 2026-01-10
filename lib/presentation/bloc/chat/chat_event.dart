@@ -58,14 +58,16 @@ class MessageReceived extends ChatEvent {
 class GroupCreateRequested extends ChatEvent {
   final String name;
   final List<String> participantIds;
+  final String? description;
 
   const GroupCreateRequested({
     required this.name,
     required this.participantIds,
+    this.description,
   });
 
   @override
-  List<Object> get props => [name, participantIds];
+  List<Object> get props => [name, participantIds, description ?? ''];
 }
 
 class GroupJoinRequested extends ChatEvent {
