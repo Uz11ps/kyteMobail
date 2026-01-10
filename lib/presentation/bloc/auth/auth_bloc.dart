@@ -182,14 +182,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthPhoneLoginRequested event,
     Emitter<AuthState> emit,
   ) async {
+    print('🏗️ AuthBloc: AuthPhoneLoginRequested for ${event.phone}');
     emit(AuthLoading());
     try {
       final user = await authRepository.loginWithPhone(
         event.phone,
         event.code,
       );
+      print('🏗️ AuthBloc: Phone login successful, user: ${user.id}');
       emit(AuthAuthenticated(user: user));
     } catch (e) {
+      print('🏗️ AuthBloc: Phone login error: $e');
       String errorMessage = e.toString();
       if (errorMessage.startsWith('Exception: ')) {
         errorMessage = errorMessage.substring(11);

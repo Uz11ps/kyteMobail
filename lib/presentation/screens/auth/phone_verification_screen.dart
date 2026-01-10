@@ -95,9 +95,11 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   }
 
   void _handleCodeSubmit() {
+    print('📱 PhoneVerificationScreen: Submitting code: ${_codeController.text}');
     if (_codeController.text.length == 6) {
       _focusNode.unfocus();
       if (widget.isLinking) {
+        print('📱 PhoneVerificationScreen: Mode is Linking');
         // Logic for linking email/phone to profile
         // For now, simulating success and going back to profile
         ScaffoldMessenger.of(context).showSnackBar(
@@ -106,6 +108,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         Navigator.of(context).pop(); // Back to Identifier screen
         Navigator.of(context).pop(); // Back to Profile
       } else if (widget.isEmail) {
+        print('📱 PhoneVerificationScreen: Mode is Email Login');
         context.read<AuthBloc>().add(
           AuthEmailLoginRequested(
             email: widget.phoneNumber,
@@ -113,6 +116,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
           ),
         );
       } else {
+        print('📱 PhoneVerificationScreen: Mode is Phone Login');
         context.read<AuthBloc>().add(
               AuthPhoneLoginRequested(
                 phone: widget.phoneNumber,
@@ -120,6 +124,8 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
               ),
             );
       }
+    } else {
+      print('📱 PhoneVerificationScreen: Code is not 6 digits: ${_codeController.text.length}');
     }
   }
 
@@ -156,11 +162,24 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
+        print('📱 PhoneVerificationScreen: AuthBloc state changed to $state');
         if (state is AuthAuthenticated) {
-          // If authenticated but name is missing, go to profile setup
-          // For MVP, assuming we go to chats if authenticated
-          Navigator.of(context).pushReplacementNamed(AppRouter.chats);
+          print('📱 PhoneVerificationScreen: User is authenticated, checking profile...');
+          // Если имя и никнейм отсутствуют, значит это новый пользователь, отправляем на настройку профиля
+          final bool hasName = state.user.name != null && state.user.name!.isNotEmpty;
+          final bool hasNickname = state.user.nickname != null && state.user.nickname!.isNotEmpty;
+          
+          print('📱 PhoneVerificationScreen: hasName=$hasName, hasNickname=$hasNickname');
+          
+          if (!hasName && !hasNickname) {
+            print('📱 PhoneVerificationScreen: Navigating to ProfileSetupScreen');
+            Navigator.of(context).pushReplacementNamed(AppRouter.profileSetup);
+          } else {
+            print('📱 PhoneVerificationScreen: Navigating to ChatsListScreen');
+            Navigator.of(context).pushReplacementNamed(AppRouter.chats);
+          }
         } else if (state is AuthError) {
+          print('📱 PhoneVerificationScreen: Auth error: ${state.message}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.message)),
           );
@@ -280,10 +299,22 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                 ),
               ),
               const Spacer(),
-              // Custom Keyboard
-              _NumberKeyboard(
-                onNumberPressed: _onNumberPressed,
-                onBackspacePressed: _onBackspacePressed,
+              // Custom Keyboard or Loading Indicator
+              BlocBuilder<AuthBloc, AuthState>(
+                builder: (context, state) {
+                  if (state is AuthLoading) {
+                    return const SizedBox(
+                      height: 300,
+                      child: Center(
+                        child: CircularProgressIndicator(color: Colors.white),
+                      ),
+                    );
+                  }
+                  return _NumberKeyboard(
+                    onNumberPressed: _onNumberPressed,
+                    onBackspacePressed: _onBackspacePressed,
+                  );
+                },
               ),
             ],
           ),

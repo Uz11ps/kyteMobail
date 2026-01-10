@@ -41,7 +41,7 @@ class AppRouter {
         );
       case phoneLogin:
         return MaterialPageRoute(
-          builder: (_) => const AuthIdentifierScreen(mode: AuthIdentifierMode.loginEmail),
+          builder: (_) => const AuthIdentifierScreen(mode: AuthIdentifierMode.loginPhone),
         );
       case register:
         return MaterialPageRoute(

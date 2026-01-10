@@ -7,6 +7,7 @@ import 'phone_verification_screen.dart';
 
 enum AuthIdentifierMode {
   loginEmail,
+  loginPhone,
   addEmail,
   addPhone,
 }
@@ -35,7 +36,7 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
 
   bool get _isValid {
     final val = _identifierController.text.trim();
-    if (widget.mode == AuthIdentifierMode.addPhone) {
+    if (widget.mode == AuthIdentifierMode.addPhone || widget.mode == AuthIdentifierMode.loginPhone) {
       return val.length >= 10; // Simple phone check
     }
     return val.isNotEmpty && val.contains('@') && val.contains('.');
@@ -50,7 +51,8 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
       
       // If adding phone, we might want to normalize it
       String finalIdentifier = identifier;
-      if (widget.mode == AuthIdentifierMode.addPhone && !identifier.startsWith('+')) {
+      final isPhone = widget.mode == AuthIdentifierMode.addPhone || widget.mode == AuthIdentifierMode.loginPhone;
+      if (isPhone && !identifier.startsWith('+')) {
         finalIdentifier = '+7$identifier';
       }
 
@@ -59,7 +61,7 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
         MaterialPageRoute(
           builder: (_) => PhoneVerificationScreen(
             phoneNumber: finalIdentifier,
-            isEmail: widget.mode != AuthIdentifierMode.addPhone,
+            isEmail: !isPhone,
             isLinking: widget.mode == AuthIdentifierMode.addEmail || widget.mode == AuthIdentifierMode.addPhone,
           ),
         ),
@@ -73,6 +75,8 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
     switch (widget.mode) {
       case AuthIdentifierMode.loginEmail:
         return 'Log In With Email';
+      case AuthIdentifierMode.loginPhone:
+        return 'Log In With Telegram';
       case AuthIdentifierMode.addEmail:
         return 'Add Email Address';
       case AuthIdentifierMode.addPhone:
@@ -85,17 +89,20 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
       case AuthIdentifierMode.loginEmail:
       case AuthIdentifierMode.addEmail:
         return 'Please enter your\nemail address';
+      case AuthIdentifierMode.loginPhone:
       case AuthIdentifierMode.addPhone:
         return 'Please confirm your\nphone number with Telegram';
     }
   }
 
   String _getLabel() {
-    return widget.mode == AuthIdentifierMode.addPhone ? 'PHONE NUMBER' : 'EMAIL ADDRESS';
+    return (widget.mode == AuthIdentifierMode.addPhone || widget.mode == AuthIdentifierMode.loginPhone) 
+        ? 'PHONE NUMBER' : 'EMAIL ADDRESS';
   }
 
   String _getHint() {
-    return widget.mode == AuthIdentifierMode.addPhone ? '( _ _ _ ) - _ _ _ - _ _ - _ _' : 'name@example.com';
+    return (widget.mode == AuthIdentifierMode.addPhone || widget.mode == AuthIdentifierMode.loginPhone) 
+        ? '( _ _ _ ) - _ _ _ - _ _ - _ _' : 'name@example.com';
   }
 
   @override
@@ -141,7 +148,7 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              if (widget.mode == AuthIdentifierMode.addPhone) ...[
+              if (widget.mode == AuthIdentifierMode.addPhone || widget.mode == AuthIdentifierMode.loginPhone) ...[
                 // Mockup 3 shows "Continue with Telegram" button
                 SizedBox(
                   width: double.infinity,
@@ -151,10 +158,10 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
                       // Simulating Telegram login by using a mock phone number or just navigating
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => const PhoneVerificationScreen(
+                          builder: (_) => PhoneVerificationScreen(
                             phoneNumber: '+79990000000', // Mock for Telegram
                             isEmail: false,
-                            isLinking: true,
+                            isLinking: widget.mode == AuthIdentifierMode.addPhone,
                           ),
                         ),
                       );
@@ -222,7 +229,7 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
                           ),
                           Row(
                             children: [
-                              if (widget.mode == AuthIdentifierMode.addPhone)
+                              if (widget.mode == AuthIdentifierMode.addPhone || widget.mode == AuthIdentifierMode.loginPhone)
                                 const Text(
                                   '+7 ',
                                   style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
@@ -243,7 +250,8 @@ class _AuthIdentifierScreenState extends State<AuthIdentifierScreen> {
                                     hintStyle: const TextStyle(color: Colors.white24),
                                   ),
                                   onChanged: (_) => setState(() {}),
-                                  keyboardType: widget.mode == AuthIdentifierMode.addPhone ? TextInputType.phone : TextInputType.emailAddress,
+                                  keyboardType: (widget.mode == AuthIdentifierMode.addPhone || widget.mode == AuthIdentifierMode.loginPhone) 
+                                      ? TextInputType.phone : TextInputType.emailAddress,
                                 ),
                               ),
                             ],

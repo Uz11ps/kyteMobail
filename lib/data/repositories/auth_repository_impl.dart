@@ -123,6 +123,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<UserModel> loginWithPhone(String phone, String code) async {
+    print('🔐 Repository: Attempting phone login for: $phone with code: $code');
     try {
       final response = await _dio.post(
         ApiEndpoints.verifyPhoneCode,
@@ -131,6 +132,8 @@ class AuthRepositoryImpl implements AuthRepository {
           'code': code,
         },
       );
+
+      print('✅ Repository: Phone login response: ${response.data}');
 
       if (response.data == null || response.data['user'] == null) {
         throw Exception('Неполные данные ответа сервера');
@@ -149,12 +152,16 @@ class AuthRepositoryImpl implements AuthRepository {
         await _storage.write(StorageKeys.userEmail, user.email!);
       }
 
+      print('✅ Repository: Phone user data saved: id=${user.id}');
       return user;
     } on DioException catch (e) {
+      print('❌ Repository: Phone login DioError: ${e.message}');
+      print('   Data: ${e.response?.data}');
       throw Exception(
         _extractErrorMessage(e.response?.data, 'Ошибка входа по телефону'),
       );
     } catch (e) {
+      print('❌ Repository: Phone login Unexpected Error: $e');
       String errorMessage = 'Неизвестная ошибка';
       try {
         if (e != null) {

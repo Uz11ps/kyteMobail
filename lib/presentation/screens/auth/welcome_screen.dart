@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'auth_identifier_screen.dart';
 import '../../widgets/kyte_logo.dart';
 import '../../../core/routing/app_router.dart';
 
@@ -44,7 +45,11 @@ class WelcomeScreen extends StatelessWidget {
                 text: 'Log In With Telegram',
                 icon: Icons.send, // Telegram-like icon
                 onPressed: () {
-                  // Telegram login logic or placeholder
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AuthIdentifierScreen(mode: AuthIdentifierMode.loginPhone),
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 40),

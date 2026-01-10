@@ -11,7 +11,15 @@ class SplashScreen extends StatelessWidget {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          Navigator.of(context).pushReplacementNamed(AppRouter.chats);
+          // Если имя и никнейм отсутствуют, значит это новый пользователь, отправляем на настройку профиля
+          final bool hasName = state.user.name != null && state.user.name!.isNotEmpty;
+          final bool hasNickname = state.user.nickname != null && state.user.nickname!.isNotEmpty;
+          
+          if (!hasName && !hasNickname) {
+            Navigator.of(context).pushReplacementNamed(AppRouter.profileSetup);
+          } else {
+            Navigator.of(context).pushReplacementNamed(AppRouter.chats);
+          }
         } else if (state is AuthUnauthenticated || state is AuthError) {
           // При ошибке или отсутствии авторизации переходим на экран приветствия
           Navigator.of(context).pushReplacementNamed(AppRouter.welcome);
